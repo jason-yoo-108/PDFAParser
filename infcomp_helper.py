@@ -256,7 +256,8 @@ def combine_observation_probabilities(name_format: list, title: torch.Tensor, fi
             else:
                 combined_probs.append(insert_peaked_probs(PAD, peak_prob))
     except Exception as e:
-            raise e
+            raise Exception(f"Exception Message: {e}; NameFormat/Title/First/Middle/Last/Suffix Shapes: " +
+                  f"{name_format}/{title.shape}/{firstname.shape}/{' '.join([m.shape for m in middlenames])}/{lastname.shape}/{suffix.shape}")
     return torch.Tensor(combined_probs).to(DEVICE)
 
 

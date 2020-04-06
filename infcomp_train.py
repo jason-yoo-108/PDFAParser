@@ -20,9 +20,9 @@ parser.add_argument('--lr', help='Learning rate', nargs='?', default=0.001, type
 parser.add_argument('--num_particles', help='Number of particles to evaluate for loss', nargs='?', default=10, type=int)
 parser.add_argument('--num_steps', help='Number of gradient descent steps', nargs='?', default=50000, type=int)
 parser.add_argument('--continue_training',
-                    help='An int deciding whether to keep training the model with config name, 0=False, 1=True',
+                    help='An int deciding whether to keep training the model with config name',
                     nargs='?',
-                    default=0, type=int)
+                    default=True, type=bool)
 
 # Parse optional args from command line and save the configurations into a JSON file
 args = parser.parse_args()

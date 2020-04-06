@@ -29,6 +29,7 @@ class PretrainedRNN(nn.Module):
         self.fc1 = nn.Linear(hidden_size, output_size)
         self.dropout = nn.Dropout(drop_out)
         self.softmax = nn.LogSoftmax(dim=2)
+        self.to(DEVICE)
 
     def forward(self, input: torch.Tensor, lng_input: torch.Tensor, hidden: torch.Tensor):
         """

@@ -19,6 +19,7 @@ class ClassificationDenoisingModel(CharacterClassificationModel):
         self.fc3 = nn.Linear(encoder_hidden_sz * encoder_num_layers * 2 * 2, self.classifier_output_sz)
         self.fc4 = nn.Linear(self.classifier_output_sz, self.classifier_output_sz)
         self.classify_softmax = nn.Softmax(dim=0)
+        self.to(DEVICE)
     
     def classify(self, hidden_state: torch.Tensor):
         joined_hidden_state = torch.cat((hidden_state[0], hidden_state[1]), dim=0)
@@ -43,6 +44,7 @@ class SequenceDenoisingModel(CharacterClassificationModel):
         self.decoder_num_layers = encoder_num_layers * 2
         self.decoder_lstm = nn.LSTM(self.embed_sz, self.encoder_hidden_sz, num_layers=self.decoder_num_layers)
         self.fc3 = nn.Linear(self.encoder_hidden_sz, self.decoder_output_sz)
+        self.to(DEVICE)
     
     def decode(self, character: str, hidden_state: torch.Tensor):
         embedded_input = self.decoder_embed(torch.LongTensor([self.input.index(character)]).to(DEVICE))
