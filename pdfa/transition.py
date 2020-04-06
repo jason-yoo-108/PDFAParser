@@ -1,4 +1,4 @@
-from state import State
+from .state import State
 
 class Transition():
     """
@@ -11,6 +11,9 @@ class Transition():
     def __init__(self, names_to_states: dict, transition_rules: dict):
         self.names_to_states = names_to_states
         self.transition_rules = transition_rules
+    
+    def can_transition(self, state: State, symbol: str) -> bool:
+        return (state.name, symbol) in self.transition_rules
     
     def transition(self, state: State, symbol: str) -> State:
         new_state_name = self.transition_rules[(state.name, symbol)]

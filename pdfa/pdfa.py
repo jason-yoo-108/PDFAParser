@@ -1,31 +1,92 @@
 import pyro
 import torch
 
-from state import State
-from symbol import *
-from transition import Transition
+from .state import State
+from .symbol import *
+from .transition import Transition
 
 class PDFA():
-    def __init__(self, start_state: State, delta: Transition, device: torch.device = None):
-        self.curr_state = start_state
+    def __init__(self,
+                name: str,
+                start_state_name: str, 
+                delta: Transition, 
+                device: torch.device = None,
+                outbound_symbols_to_probs: dict = None):
+        self.name = name
+        self.curr_state = delta.names_to_states[start_state_name]
         self.delta = delta
         self.device = device
+        self.fill_incomplete_emission_probs(outbound_symbols_to_probs)
     
-    def emit(self, pyro_address: str, emission_probs=None):
+    def at_absorbing_state(self) -> bool:
+        if isinstance(self.curr_state, PDFA):
+            return self.curr_state.at_absorbing_state()
+        return self.curr_state.absorbing
+    
+    def fill_incomplete_emission_probs(self, outbound_symbols_to_probs: dict):
         """
-        If emission_probs is supplied (in q), sample a symbol from emission_probs.
-        Else (in p), sample a symbol from self.curr_state.emission_probs.
+        Fill emission probabilities of non-top-level PDFA states based on
+        outbound_symbols_to_probs dictionary that contains information on
+        the likelihood of symbols that will cause the sub-PDFA
+        to exit.
         """
-        if emission_probs is None:
-            emission_probs = torch.tensor(self.curr_state.emission_probs).to(self.device)
-        
-        symbol_index = pyro.sample(pyro_address, pyro.distributions.Categorical(emission_probs))
-        return SYMBOL[symbol_index]
+        for state in self.delta.names_to_states.values():
+            if isinstance(state, PDFA):
+                state.fill_incomplete_emission_probs(outbound_symbols_to_probs)
+            else:
+                if outbound_symbols_to_probs is None or state.complete == True: continue
+                state.set_missing_emission_probs(outbound_symbols_to_probs, normalize=True)
+    
+    def get_current_state(self) -> State:
+        """
+        Retrieve the current state of the PDFA. If current state is
+        another PDFA, return that PDFA's current state.
+        """
+        if isinstance(self.curr_state, PDFA):
+            return self.curr_state.get_current_state()
+        return self.curr_state
+    
+    def get_emission_probs(self) -> list:
+        """
+        Retrieves the emission probabilities of the current state.
+        If the emission probabilities are incomplete (in sub-PDFAs),
+        appropriately fill them.
+        """
+        if isinstance(self.curr_state, PDFA):
+            return self.curr_state.get_emission_probs()
+        return self.curr_state.emission_probs
+    
+    def get_valid_emission_mask(self) -> list:
+        """
+        Retrieve an array that has a 1. for indexes of symbols that
+        can be emitted from the state and 0. for others.
+        """
+        if isinstance(self.curr_state, PDFA):
+            return self.curr_state.get_valid_emission_mask()
+        emission_mask = []
+        for sym in SYMBOL:
+            if self.curr_state.can_emit(sym):
+                emission_mask.append(1.)
+            else:
+                emission_mask.append(0.)
+        return emission_mask
 
-    def transition(self, symbol) -> State:
+    def transition(self, symbol) -> bool:
         """
-        Given a symbol, return a State object based on self.delta
+        Given a symbol, transition to next state based on self.delta.
+        Return whether the transition was successful or not.
         """
-        next_state = self.delta.transition(self.curr_state, symbol)
-        self.curr_state = next_state
-        return next_state
+        if isinstance(self.curr_state, PDFA):
+            # If current state is another PDFA, call transition on it.
+            # If transition was not successful (no rule in sub-PDFA),
+            # we exit the sub-PDFA.
+            success = self.curr_state.transition(symbol)
+            if success: return True
+
+        if self.delta.can_transition(self.curr_state, symbol):
+            next_state = self.delta.transition(self.curr_state, symbol)
+            self.curr_state = next_state
+            return True
+        
+        return False
+
