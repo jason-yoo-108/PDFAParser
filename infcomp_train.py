@@ -62,7 +62,7 @@ for step in range(args.num_steps):
             plt.xlabel(f"# gradient steps")
             plt.ylabel("loss")
             plt.savefig(f"result/{SESSION_NAME}.png")
-            name_parser.save_checkpoint(filename=f"{SESSION_NAME}.pth.tar")
+            name_parser.save_checkpoint(filename=f"{SESSION_NAME}")
     except Exception as e:
         print(f"Exception at step {step}: {str(e)}")
 
