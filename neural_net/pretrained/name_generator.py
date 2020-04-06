@@ -40,7 +40,7 @@ class NameGenerator():
             return output, hidden
 
     def indexTensor(self, names: list, max_len: int):
-        tensor = torch.zeros(max_len, len(names)).type(torch.LongTensor)
+        tensor = torch.zeros(max_len, len(names)).type(torch.LongTensor).to(DEVICE)
         for i, name in enumerate(names):
             for j, letter in enumerate(name):
                 index = self.input.index(letter)
@@ -49,10 +49,10 @@ class NameGenerator():
                     raise Exception(f'{names[j][i]} is not a char in {self.input}')
 
                 tensor[j][i] = index
-        return tensor.to(DEVICE)
+        return tensor
     
     def lengthTestTensor(self, lengths:list):
-        tensor = torch.zeros(len(lengths)).type(torch.LongTensor)
+        tensor = torch.zeros(len(lengths)).type(torch.LongTensor).to(DEVICE)
         for i, length in enumerate(lengths):
             tensor[i] = length[i]
         return tensor

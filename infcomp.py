@@ -122,7 +122,7 @@ class NameParser():
 
     def index_encode(self, name: str) -> torch.Tensor:
         if len(name)>MAX_STRING_LEN-2: raise Exception(f"Name must be shorter than {MAX_STRING_LEN-2}")
-        result = torch.zeros(MAX_STRING_LEN).to(DEVICE).to(torch.long)
+        result = torch.zeros(MAX_STRING_LEN).to(torch.long).to(DEVICE)
         name = [SOS] + list(name) + [EOS] + [PAD]*(MAX_STRING_LEN-len(name)-2)
         for i in range(MAX_STRING_LEN):
             result[i] = PRINTABLE.index(name[i])
