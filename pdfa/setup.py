@@ -232,20 +232,20 @@ NAMES_TO_STATES = {
         name='FIRST_LFM_SPACE',
         start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
-        outbound_symbols_to_probs={MIDDLE: 0.8, SUFFIX: 0.2}
+        outbound_symbols_to_probs={MIDDLE: 0.6, SUFFIX: 0.3, EOS_FORMAT: 0.1}
     ),
     'MIDDLE_LFM_1': PDFA(
         name='MIDDLE_LFM_1',
         start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
-        outbound_symbols_to_probs={SPACE: 0.8, PERIOD: 0.175, SUFFIX: 0.025}
+        outbound_symbols_to_probs={SPACE: 0.5, EOS_FORMAT: 0.3, PERIOD: 0.175, SUFFIX: 0.025}
     ),
-    'MIDDLE_LFM_1_P': State(name='MIDDLE_LFM_1_P', symbols_to_probs={SPACE: 0.95, MIDDLE: 0.05}),
+    'MIDDLE_LFM_1_P': State(name='MIDDLE_LFM_1_P', symbols_to_probs={SPACE: 0.475, EOS_FORMAT: 0.475, MIDDLE: 0.05}),
     'MIDDLE_LFM_1_SPACE': PDFA(
         name='MIDDLE_LFM_1_SPACE',
         start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
-        outbound_symbols_to_probs={SUFFIX: 0.8, MIDDLE: 0.2}
+        outbound_symbols_to_probs={SUFFIX: 0.7, MIDDLE: 0.2, EOS_FORMAT: 0.1}
     ),
     'MIDDLE_LFM_2': PDFA(
         name='MIDDLE_LFM_2',
@@ -324,13 +324,17 @@ FULLNAME_TRANSITION_RULES = {
     ('FIRST_LFM', MIDDLE): 'MIDDLE_LFM_1',
     ('FIRST_LFM_SPACE', MIDDLE): 'MIDDLE_LFM_1',
     ('FIRST_LFM_SPACE', SUFFIX): 'SUFFIX',
+    ('FIRST_LFM_SPACE', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_1', SPACE): 'MIDDLE_LFM_1_SPACE',
+    ('MIDDLE_LFM_1', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_1', PERIOD): 'MIDDLE_LFM_1_P',
     ('MIDDLE_LFM_1', SUFFIX): 'SUFFIX',
     ('MIDDLE_LFM_1_P', SPACE): 'MIDDLE_LFM_1_SPACE',
+    ('MIDDLE_LFM_1_P', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_1_P', MIDDLE): 'MIDDLE_LFM_2',
     ('MIDDLE_LFM_1_SPACE', SUFFIX): 'SUFFIX',
     ('MIDDLE_LFM_1_SPACE', MIDDLE): 'MIDDLE_LFM_2',
+    ('MIDDLE_LFM_1_SPACE', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_2', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_2', SPACE): 'SUFFIX_SPACE',
     ('MIDDLE_LFM_2', PERIOD): 'MIDDLE_LFM_2_P',

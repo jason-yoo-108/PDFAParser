@@ -137,9 +137,8 @@ def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_out
 
         rnn_input = SOS
         hidden = encoder_hidden
-
         for i in range(name_length):
-            rnn_probs, hidden = rnn.decode(rnn_input, hidden)
+            rnn_probs, hidden = rnn.decode(rnn_input, name_length, hidden)
             char_index = pyro.sample(f"{pyro_address}_{i}", dist.Categorical(rnn_probs)).squeeze()
             rnn_input = rnn.decoder_output[char_index]
             name.append(rnn_input)
@@ -267,7 +266,7 @@ def combine_observation_probabilities(name_format: list, title: torch.Tensor, fi
                 combined_probs.append(insert_peaked_probs(COMMA, peak_prob))
             elif f == PERIOD:
                 combined_probs.append(insert_peaked_probs(PERIOD, peak_prob))
-            elif f == EOS:
+            elif f == EOS_FORMAT:
                 combined_probs.append(insert_peaked_probs(EOS, peak_prob))
             else:
                 combined_probs.append(insert_peaked_probs(PAD, peak_prob))

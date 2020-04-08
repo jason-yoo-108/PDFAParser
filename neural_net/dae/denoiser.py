@@ -41,12 +41,13 @@ class SequenceDenoisingModel(CharacterClassificationModel):
         self.decoder_output_sz = len(decoder_output)
         self.decoder_embed = nn.Embedding(self.input_sz, self.embed_sz, padding_idx=input.index(PAD))
         self.decoder_num_layers = encoder_num_layers * 2
-        self.decoder_lstm = nn.LSTM(self.embed_sz, self.encoder_hidden_sz, num_layers=self.decoder_num_layers)
+        self.decoder_lstm = nn.LSTM(self.embed_sz+MAX_OUTPUT_LEN, self.encoder_hidden_sz, num_layers=self.decoder_num_layers)
         self.fc3 = nn.Linear(self.encoder_hidden_sz, self.decoder_output_sz)
         self.to(DEVICE)
 
-    def decode(self, character: str, hidden_state: torch.Tensor):
+    def decode(self, character: str, name_length: int, hidden_state: torch.Tensor):
         embedded_input = self.decoder_embed(torch.LongTensor([self.input.index(character)]).to(DEVICE))
+        embedded_input = torch.cat((embedded_input, self._one_hot_length(name_length)), dim=1)
         decoder_output, hidden_state = self.decoder_lstm(embedded_input.unsqueeze(1), hidden_state)
         probs = self.softmax(self.fc3.forward(decoder_output))
         return probs, hidden_state
@@ -54,3 +55,8 @@ class SequenceDenoisingModel(CharacterClassificationModel):
     def init_decoder_hidden(self, batch_sz: int = 1):
         return (torch.zeros(self.decoder_num_layers, batch_sz, self.encoder_hidden_sz).to(DEVICE),
                 torch.zeros(self.decoder_num_layers, batch_sz, self.encoder_hidden_sz).to(DEVICE))
+
+    def _one_hot_length(self, length: int):
+        result = torch.zeros(1,MAX_OUTPUT_LEN).to(DEVICE)
+        result[0,length-1] = 1
+        return result
