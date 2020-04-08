@@ -1,15 +1,12 @@
-import pyro
-import pyro.distributions as dist
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from const import *
-from pdfa.symbol import SYMBOL
 
 
 class CharacterClassificationModel(nn.Module):
-    def __init__(self, input: list, encoder_hidden_sz: int, output: list, encoder_num_layers: int = 3, embed_sz: int = 16,
+    def __init__(self, input: list, encoder_hidden_sz: int, output: list, encoder_num_layers: int = 3,
+                 embed_sz: int = 16,
                  predictor_hidden_sz: int = 64, predictor_num_layers: int = 1):
         """
         This module is made specifically for classifying characters in a name as first, middle, last, title 
@@ -38,7 +35,7 @@ class CharacterClassificationModel(nn.Module):
         self.rnn_predictor = None
 
         self.to(DEVICE)
-    
+
     def encode(self, input: torch.LongTensor):
         embedded_input = self.embed(input).unsqueeze(1)
         length_tensor = torch.Tensor([len(input)]).to(DEVICE)
@@ -46,12 +43,13 @@ class CharacterClassificationModel(nn.Module):
         encoder_output, encoder_hidden = self.encoder_lstm(pps_input, self.init_encoder_hidden())
         encoder_output, _ = torch.nn.utils.rnn.pad_packed_sequence(encoder_output)
         return encoder_output, encoder_hidden
-    
+
     def predict(self, symbol: str, encoder_output: torch.Tensor, hidden_state: torch.Tensor):
         flattened_encoder_input = encoder_output.flatten()
         fc1_input = torch.cat((flattened_encoder_input, self.one_hot_encode(symbol, self.output)), dim=0)
         predictor_input = F.relu(self.fc1.forward(fc1_input))
-        predictor_output, hidden_state = self.predictor_lstm(predictor_input.expand(1,1,self.predictor_input_sz), hidden_state)
+        predictor_output, hidden_state = self.predictor_lstm(predictor_input.expand(1, 1, self.predictor_input_sz),
+                                                             hidden_state)
         probs = self.softmax(self.fc2.forward(predictor_output))
         return probs, hidden_state
 

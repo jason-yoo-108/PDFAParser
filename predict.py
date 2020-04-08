@@ -1,10 +1,8 @@
 import argparse
 
-from const import *
 from evaluate.score import *
 from infcomp import NameParser
 from utilities.config import load_json
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -27,5 +25,5 @@ if __name__ == "__main__":
 
     for j, sample in enumerate(sample_traces):
         print("Trace Log Probability: %.5f" % sample.log_prob_sum())
-        #print(f"Parsed Result: {get_parse_result(sample)}")
+        # print(f"Parsed Result: {get_parse_result(sample)}")
         print(f"Trace Result:  {get_full_result(sample, name_parser)}")

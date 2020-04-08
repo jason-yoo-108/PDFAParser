@@ -1,5 +1,3 @@
-import torch
-
 from const import PRINTABLE, NUM_PRINTABLE
 
 CHARACTER_REPLACEMENT = dict()

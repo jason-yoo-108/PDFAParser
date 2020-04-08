@@ -1,7 +1,7 @@
-from const import DEVICE
 import torch
 import torch.nn as nn
 
+from const import DEVICE
 
 
 class PretrainedRNN(nn.Module):
@@ -46,7 +46,7 @@ class PretrainedRNN(nn.Module):
         lstm_out = self.fc1(lstm_out)
         lstm_out = self.dropout(lstm_out)
         lstm_out = self.softmax(lstm_out)
-        
+
         return lstm_out, hidden
 
     def initHidden(self, batch_size=1):

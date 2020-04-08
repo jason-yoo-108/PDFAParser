@@ -1,18 +1,13 @@
-from const import *
-from pdfa.pdfa import PDFA
-from pdfa.setup import generate_name_pdfa
-from pdfa.state import State
-from pdfa.symbol import *
-
-from neural_net.pretrained.name_generator import *
-from neural_net.cc_model import CharacterClassificationModel
-from neural_net.dae.denoiser import ClassificationDenoisingModel, SequenceDenoisingModel
-from noise.noise import *
-from noise.noise_class import *
-
 import pyro
 import pyro.distributions as dist
 import torch
+
+from neural_net.cc_model import CharacterClassificationModel
+from neural_net.pretrained.name_generator import *
+from noise.noise import *
+from noise.noise_class import *
+from pdfa.pdfa import PDFA
+from pdfa.symbol import *
 
 
 def sample_pdfa(pdfa: PDFA) -> list:
@@ -22,7 +17,8 @@ def sample_pdfa(pdfa: PDFA) -> list:
             emission_probs = torch.Tensor(pdfa.get_emission_probs()).to(DEVICE)
             symbol = SYMBOL[pyro.sample(f"{ADDRESS['format']}_{i}", dist.Categorical(emission_probs))]
             transition_success = pdfa.transition(symbol)
-            if not transition_success: raise Exception(f"PDFA transition with state/symbol {pdfa.get_current_state().name}/{symbol} failed.")
+            if not transition_success: raise Exception(
+                f"PDFA transition with state/symbol {pdfa.get_current_state().name}/{symbol} failed.")
         else:
             emission_probs = torch.zeros(len(SYMBOL)).to(DEVICE)
             emission_probs[SYMBOL.index(PAD_FORMAT)] = 1.
@@ -30,11 +26,13 @@ def sample_pdfa(pdfa: PDFA) -> list:
         name_format.append(symbol)
     return name_format
 
-def sample_conditional_pdfa(pdfa: PDFA, inference_network: CharacterClassificationModel, observed: torch.Tensor) -> list:
+
+def sample_conditional_pdfa(pdfa: PDFA, inference_network: CharacterClassificationModel,
+                            observed: torch.Tensor) -> list:
     name_format = []
     encoder_output, encoder_hidden = inference_network.encode(observed)
     symbol, hidden_state = SOS_FORMAT, inference_network.init_predictor_hidden()
-    
+
     for i in range(MAX_STRING_LEN):
         if not pdfa.at_absorbing_state():
             emission_probs, hidden_state = inference_network.predict(symbol, encoder_output[i], hidden_state)
@@ -45,13 +43,15 @@ def sample_conditional_pdfa(pdfa: PDFA, inference_network: CharacterClassificati
                 corrected_emission_probs = torch.Tensor(pdfa.get_emission_probs()).to(DEVICE)
             symbol = SYMBOL[pyro.sample(f"{ADDRESS['format']}_{i}", dist.Categorical(corrected_emission_probs))]
             transition_success = pdfa.transition(symbol)
-            if not transition_success: raise Exception(f"PDFA transition with state/symbol {pdfa.get_current_state().name}/{symbol} failed.")
+            if not transition_success: raise Exception(
+                f"PDFA transition with state/symbol {pdfa.get_current_state().name}/{symbol} failed.")
         else:
             emission_probs = torch.zeros(len(SYMBOL)).to(DEVICE)
             emission_probs[SYMBOL.index(PAD_FORMAT)] = 1.
             symbol = SYMBOL[pyro.sample(f"{ADDRESS['format']}_{i}", dist.Categorical(emission_probs))]
         name_format.append(symbol)
     return name_format
+
 
 def separate_components(name_format: list) -> dict:
     result = {TITLE: [], FIRST: [], MIDDLE: [], LAST: [], SUFFIX: []}
@@ -65,6 +65,7 @@ def separate_components(name_format: list) -> dict:
         result[last_sym].append(name_format[last_sym_index:i])
     return result
 
+
 def separate_name(name_format: list, name: torch.Tensor) -> dict:
     result = {TITLE: [], FIRST: [], MIDDLE: [], LAST: [], SUFFIX: []}
     last_sym, last_sym_index = name_format[0], 0
@@ -73,17 +74,20 @@ def separate_name(name_format: list, name: torch.Tensor) -> dict:
             if last_sym in result:
                 result[last_sym].append(name[last_sym_index:i])
             last_sym, last_sym_index = sym, i
-    if name_format[-1] in list(result.keys()): 
+    if name_format[-1] in list(result.keys()):
         result[last_sym].append(name[last_sym_index:i])
     return result
 
-def sample_title_and_noise(title_format: list, rnn: ClassificationDenoisingModel = None,  encoder_output=None, encoder_hidden=None) -> tuple:
+
+def sample_title_and_noise(title_format: list, rnn: ClassificationDenoisingModel = None, encoder_output=None,
+                           encoder_hidden=None) -> tuple:
     """
     Samples a title based on title_format and noise_classes.
     Ensures title_length is either 2, 3, or 5.
     """
-    title_length, noise_classes = sample_title_noise(title_format_length=len(title_format[0]), rnn=rnn, encoder_output=encoder_output)
-    
+    title_length, noise_classes = sample_title_noise(title_format_length=len(title_format[0]), rnn=rnn,
+                                                     encoder_output=encoder_output)
+
     if rnn is None:
         # In model
         title_probs = torch.zeros(len(TITLE_LIST)).to(DEVICE)
@@ -114,7 +118,8 @@ def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_out
     in_model = isinstance(rnn, NameGenerator)
 
     if in_model:
-        name_length, noise_classes = sample_name_noise(name_format_length=len(name_format[0]), pyro_address=pyro_address)
+        name_length, noise_classes = sample_name_noise(name_format_length=len(name_format[0]),
+                                                       pyro_address=pyro_address)
         rnn_input = rnn.indexTensor([[SOS]], 1).to(DEVICE)
         length_input = rnn.lengthTestTensor([[name_length]]).to(DEVICE)
         hidden = None
@@ -126,7 +131,9 @@ def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_out
             name.append(char)
             rnn_input = rnn.indexTensor([[char]], 1).to(DEVICE)
     else:
-        name_length, noise_classes = sample_name_noise(name_format_length=len(name_format[0]), pyro_address=pyro_address, rnn=rnn, encoder_output=encoder_output)
+        name_length, noise_classes = sample_name_noise(name_format_length=len(name_format[0]),
+                                                       pyro_address=pyro_address, rnn=rnn,
+                                                       encoder_output=encoder_output)
 
         rnn_input = SOS
         hidden = encoder_hidden
@@ -140,23 +147,27 @@ def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_out
     return name, noise_classes
 
 
-def sample_multiple_name_and_noise(name_formats: list, rnn, pyro_address: str, encoder_outputs = None, encoder_hiddens = None) -> tuple:
+def sample_multiple_name_and_noise(name_formats: list, rnn, pyro_address: str, encoder_outputs=None,
+                                   encoder_hiddens=None) -> tuple:
     names, multiple_noise_classes = [], []
     for i, name_format in enumerate(name_formats):
         encoder_output = encoder_outputs[i] if encoder_outputs is not None else None
         encoder_hidden = encoder_hiddens[i] if encoder_hiddens is not None else None
-        name, noise_classes = sample_name_and_noise([name_format], rnn, f"{pyro_address}_{i}", encoder_output, encoder_hidden)
+        name, noise_classes = sample_name_and_noise([name_format], rnn, f"{pyro_address}_{i}", encoder_output,
+                                                    encoder_hidden)
         names.append(name)
         multiple_noise_classes.append(noise_classes)
     return names, multiple_noise_classes
 
 
-def sample_suffix_and_noise(suffix_format: list, rnn: ClassificationDenoisingModel = None, encoder_output = None, encoder_hidden = None) -> tuple:
+def sample_suffix_and_noise(suffix_format: list, rnn: ClassificationDenoisingModel = None, encoder_output=None,
+                            encoder_hidden=None) -> tuple:
     """
     Samples a suffix based on suffix_format and noise_classes.
     """
-    suffix_length, noise_classes = sample_suffix_noise(suffix_format_length=len(suffix_format[0]), rnn=rnn, encoder_output=encoder_output)
-    
+    suffix_length, noise_classes = sample_suffix_noise(suffix_format_length=len(suffix_format[0]), rnn=rnn,
+                                                       encoder_output=encoder_output)
+
     if rnn is None:
         # In model
         suffix_probs = torch.zeros(len(SUFFIX_LIST)).to(DEVICE)
@@ -184,10 +195,11 @@ def sample_suffix_and_noise(suffix_format: list, rnn: ClassificationDenoisingMod
 
 def observation_probabilities(original: list, noise_classes: list, peak_prob: float) -> torch.Tensor:
     noised_tensor = []
-    i = 0 # Tracks the index of the latent name for noising purposes
-    #try:
+    i = 0  # Tracks the index of the latent name for noising purposes
+    # try:
     for noise_class in noise_classes:
-        if i > len(original): raise Exception(f"Index greater than original list; info (i/original/noise_class): {i}, {original}, {noise_classes}")
+        if i > len(original): raise Exception(
+            f"Index greater than original list; info (i/original/noise_class): {i}, {original}, {noise_classes}")
         if noise_class == NOISE_NONE:
             noised_tensor.append(insert_peaked_probs(original[i], peak_prob))
             i += 1
@@ -201,13 +213,16 @@ def observation_probabilities(original: list, noise_classes: list, peak_prob: fl
             i += 1
         elif noise_class == NOISE_DELETE:
             # JASON XDXXXX => JXASON
-            if i >= len(original): index = len(original)-1
-            else: index = i
+            if i >= len(original):
+                index = len(original) - 1
+            else:
+                index = i
             noised_tensor.append(insert_noise_probs(original[index]))
 
     if len(noised_tensor) != len(noise_classes):
-        raise Exception(f"Length Mismatch Between Noised Tensor and Noise Classes: {len(noised_tensor)} vs {len(noise_classes)}")
-    #except Exception as e:
+        raise Exception(
+            f"Length Mismatch Between Noised Tensor and Noise Classes: {len(noised_tensor)} vs {len(noise_classes)}")
+    # except Exception as e:
     #    raise e
 
     return noised_tensor
@@ -218,7 +233,8 @@ def one_hot_char(self, char: str) -> list:
     result[PRINTABLE.index(char)] = 1.
     return result
 
-def combine_observation_probabilities(name_format: list, title: torch.Tensor, firstname: torch.Tensor, 
+
+def combine_observation_probabilities(name_format: list, title: torch.Tensor, firstname: torch.Tensor,
                                       middlenames: list, lastname: torch.Tensor, suffix: torch.Tensor,
                                       peak_prob: int) -> torch.Tensor:
     try:
@@ -256,8 +272,6 @@ def combine_observation_probabilities(name_format: list, title: torch.Tensor, fi
             else:
                 combined_probs.append(insert_peaked_probs(PAD, peak_prob))
     except Exception as e:
-            raise Exception(f"Exception Message: {e}; NameFormat/Title/First/Middle/Last/Suffix Shapes: " +
-                  f"{name_format}/{title.shape}/{firstname.shape}/{' '.join([m.shape for m in middlenames])}/{lastname.shape}/{suffix.shape}")
+        raise Exception(f"Exception Message: {e}; NameFormat/Title/First/Middle/Last/Suffix Shapes: " +
+                        f"{name_format}/{title.shape}/{firstname.shape}/{' '.join([m.shape for m in middlenames])}/{lastname.shape}/{suffix.shape}")
     return torch.Tensor(combined_probs).to(DEVICE)
-
-

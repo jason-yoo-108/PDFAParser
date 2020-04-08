@@ -1,20 +1,18 @@
 import string
+
 import torch
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 SOS = 'SOS'  # '<SOS>'
 EOS = 'EOS'  # '<EOS>'
 PAD = 'PAD'  # '<PAD>'
-
 
 # for infcomp.py
 MAX_OUTPUT_LEN = 10
 MAX_STRING_LEN = 50
 PRINTABLE = [char for char in string.printable] + [SOS, PAD, EOS]
 NUM_PRINTABLE = len(PRINTABLE)
-
 
 ADDRESS = {
     'format': 'format',
@@ -26,7 +24,6 @@ ADDRESS = {
     'suffix': 'suffix'
 }
 
-
 # Noising Probabilities: [<none>, <add a character>, <replace a character>, <remove a character>]
 NOISE_NONE = 'X'
 NOISE_ADD = 'A'
@@ -34,17 +31,15 @@ NOISE_REPLACE = 'R'
 NOISE_DELETE = 'D'
 NOISE_SOS = '1'
 NOISE = [NOISE_NONE, NOISE_ADD, NOISE_REPLACE, NOISE_DELETE, NOISE_SOS]
-TITLE_NOISE_PROBS = [9/10, 1/30, 1/30, 1/30, 0.]
-NAME_NOISE_PROBS = [9/10, 1/30, 1/30, 1/30, 0.]
-SUFFIX_NOISE_PROBS = [9/10, 1/30, 1/30, 1/30, 0.]
-
+TITLE_NOISE_PROBS = [9 / 10, 1 / 30, 1 / 30, 1 / 30, 0.]
+NAME_NOISE_PROBS = [9 / 10, 1 / 30, 1 / 30, 1 / 30, 0.]
+SUFFIX_NOISE_PROBS = [9 / 10, 1 / 30, 1 / 30, 1 / 30, 0.]
 
 TITLE_LIST = ['Mr', 'Ms', 'Dr', 'Mrs', 'Sir', "Ma'am", 'Madam']
 # Title Probabilities Per Length
 TITLE_2 = {'Mr': (0, 0.45), 'Ms': (1, 0.45), 'Dr': (2, 0.1)}
 TITLE_3 = {'Mrs': (3, 0.9), 'Sir': (4, 0.1)}
 TITLE_5 = {"Ma'am": (5, 0.5), 'Madam': (6, 0.5)}
-
 
 SUFFIX_LIST = ['Sr', 'Snr', 'Jr', 'Jnr', 'PhD', 'MD', 'I', 'II', 'III', 'IV']
 # Suffix Probabilities Per Length

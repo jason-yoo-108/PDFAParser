@@ -1,8 +1,9 @@
 import argparse
+
 import matplotlib.pyplot as plt
 import pyro
-from pyro.infer import CSIS
 import torch
+from pyro.infer import CSIS
 
 from infcomp import NameParser
 from utilities.config import save_json
@@ -65,4 +66,3 @@ for step in range(args.num_steps):
             name_parser.save_checkpoint(filename=f"{SESSION_NAME}")
     except Exception as e:
         print(f"Exception at step {step}: {str(e)}")
-
