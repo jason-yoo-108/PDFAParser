@@ -30,6 +30,7 @@ class NameGenerator():
         if not os.path.exists(path):
             raise Exception(f"Path does not exist: {path}")
         self.lstm.load_state_dict(torch.load(path, map_location=DEVICE)['weights'])
+        self.lstm.eval()
 
     def forward(self, input: torch.Tensor, length: torch.Tensor, hidden_state: torch.Tensor = None):
         with torch.no_grad():

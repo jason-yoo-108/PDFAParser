@@ -89,7 +89,7 @@ def get_full_result(sample_trace, name_parser) -> dict:
 
     if middlename1 != '' and middlename2 != '':
         middlename = middlename1 + ' ' + middlename2
-    if middlename1 != '':
+    elif middlename1 != '':
         middlename = middlename1
 
     return {

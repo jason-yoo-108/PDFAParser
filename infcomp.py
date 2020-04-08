@@ -128,6 +128,14 @@ class NameParser():
             result[i] = PRINTABLE.index(name[i])
         return result
     
+    def test_mode(self):
+        # Call at inference time
+        self.guide_format.test_mode()
+        self.guide_title.test_mode()
+        self.guide_fn.test_mode()
+        self.guide_ln.test_mode()
+        self.guide_suffix.test_mode()
+    
     def load_checkpoint(self, folder="nn_model", filename="checkpoint"):
         aux_fp = os.path.join(folder, f"{filename}_aux.pth.tar")
         name_fp = os.path.join(folder, f"{filename}_name.pth.tar")

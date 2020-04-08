@@ -10,7 +10,7 @@ from pdfa.symbol import SYMBOL
 
 class CharacterClassificationModel(nn.Module):
     def __init__(self, input: list, encoder_hidden_sz: int, output: list, encoder_num_layers: int = 3, embed_sz: int = 16,
-                 predictor_hidden_sz: int = 64, predictor_num_layers: int = 1):
+                 predictor_hidden_sz: int = 64, predictor_num_layers: int = 1, dropout: int = 0.1):
         """
         This module is made specifically for classifying characters in a name as first, middle, last, title 
         or suffix. Acts as a finite state automota by zeroing out moves that can't be taken
@@ -29,8 +29,8 @@ class CharacterClassificationModel(nn.Module):
         self.input_pad_idx = self.input.index(PAD)
         self.softmax = nn.Softmax(dim=2)
         self.embed = nn.Embedding(self.input_sz, self.embed_sz, padding_idx=self.input_pad_idx)
-        self.encoder_lstm = nn.LSTM(self.embed_sz, encoder_hidden_sz, num_layers=encoder_num_layers, bidirectional=True)
-        self.predictor_lstm = nn.LSTM(self.predictor_input_sz, predictor_hidden_sz, num_layers=predictor_num_layers)
+        self.encoder_lstm = nn.LSTM(self.embed_sz, encoder_hidden_sz, num_layers=encoder_num_layers, bidirectional=True, dropout=dropout)
+        self.predictor_lstm = nn.LSTM(self.predictor_input_sz, predictor_hidden_sz, num_layers=predictor_num_layers, dropout=dropout)
         self.fc1 = nn.Linear(self.encoder_hidden_sz * 2 + len(output), self.predictor_input_sz)
         self.fc2 = nn.Linear(self.predictor_hidden_sz, self.output_sz)
 
@@ -59,6 +59,10 @@ class CharacterClassificationModel(nn.Module):
         ret = torch.zeros(len(encoding_reference)).to(DEVICE)
         ret[encoding_reference.index(previous_sample)] = 1
         return ret
+    
+    def test_mode(self):
+        self.encoder_lstm.eval()
+        self.predictor_lstm.eval()
 
     def init_encoder_hidden(self, batch_sz: int = 1):
         return (torch.zeros(self.encoder_num_layers * 2, batch_sz, self.encoder_hidden_sz).to(DEVICE),

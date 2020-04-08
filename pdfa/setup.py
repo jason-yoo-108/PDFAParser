@@ -11,7 +11,7 @@ from .transition import Transition
 SPACE_DIST = [0.9, 0.1/3, 0.1/3, 0.1/3]
 TITLE_DIST = [0., 0.8, 0.15, 0., 0.05]
 FIRST_DIST = [0.01, 0.03, 0.15, 0.2, 0.2, 0.15, 0.1, 0.08, 0.04, 0.04]
-MIDDLE_DIST = [0.01, 0.03, 0.15, 0.2, 0.2, 0.15, 0.1, 0.08, 0.04, 0.04]
+MIDDLE_DIST = [0.15, 0.04, 0.1, 0.15, 0.15, 0.15, 0.1, 0.08, 0.04, 0.04]
 LAST_DIST = [0.01, 0.03, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12]
 SUFFIX_DIST = [0.02, 0.49, 0.49]
 
@@ -214,7 +214,7 @@ NAMES_TO_STATES = {
         name='LAST_LFM',
         start_state_name='L1', 
         delta=Transition(names_to_states=deepcopy(LAST_NAMES_TO_STATES), transition_rules=LAST_TRANSITION),
-        outbound_symbols_to_probs={COMMA: 0.975, SPACE: 0.025}
+        outbound_symbols_to_probs={COMMA: 0.95, SPACE: 0.05}
     ),
     'LAST_LFM_C': State(name='LAST_LFM_C', symbols_to_probs={SPACE: 0.95, FIRST: 0.05}),
     'LAST_LFM_SPACE': PDFA(

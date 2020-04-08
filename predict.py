@@ -19,6 +19,7 @@ if __name__ == "__main__":
     config = load_json(args.config)
     name_parser = NameParser(config['rnn_num_layers'], config['rnn_hidden_size'], config['rnn_hidden_size'])
     name_parser.load_checkpoint(filename=f"{config['session_name']}")
+    name_parser.test_mode()
 
     if args.true_posterior:
         sample_traces = get_importance_traces(args.name, name_parser, args.num_samples, args.num_particles)
