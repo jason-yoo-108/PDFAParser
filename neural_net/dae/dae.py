@@ -1,6 +1,5 @@
 import pyro
 import pyro.distributions as dist
-import torch
 import torch.nn as nn
 
 from const import *

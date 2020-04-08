@@ -1,7 +1,7 @@
-import math
+from random import randint
+
 import torch
 import torch.distributions as distributions
-from random import randint
 
 CHARACTER_REPLACEMENT = dict()
 CHARACTER_REPLACEMENT['A'] = 'QSZWXa'

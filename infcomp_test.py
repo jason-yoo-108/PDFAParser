@@ -1,14 +1,12 @@
 import argparse
-import pyro
+
 import distance
 import pandas as pd
 
-from const import *
-from infcomp import NameParser
 from evaluate.eval_noiser import *
 from evaluate.score import *
+from infcomp import NameParser
 from utilities.config import *
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', help='filepath to config json', type=str, default='config/UNNAMED_SESSION.json')
@@ -22,7 +20,6 @@ parser.add_argument('--test_set', help='path of the test set', nargs='?', defaul
 args = parser.parse_args()
 
 config = load_json(args.config)
-
 
 name_parser = NameParser(config['rnn_num_layers'], config['rnn_hidden_size'], config['rnn_hidden_size'])
 name_parser.load_checkpoint(filename=f"{config['session_name']}")
@@ -47,6 +44,7 @@ def parse_to_append(result):
         to_append = result[0]
     return to_append
 
+
 def infer(observed_name):
     if args.true_posterior:
         traces = get_importance_traces(observed_name, name_parser, args.num_samples, args.num_particles)
@@ -64,7 +62,7 @@ for i, j in test_data.iterrows():
     curr = j['name']
     if args.noised:
         allowed_noise = [c for c in string.ascii_letters + string.digits]
-        curr = noise_name(curr,allowed_noise)
+        curr = noise_name(curr, allowed_noise)
     correct_fn = j['first']
     correct_mn = j['middle']
     correct_ln = j['last']
@@ -86,23 +84,23 @@ for i, j in test_data.iterrows():
     fn_distance = distance.levenshtein(fn_mode, correct_fn)
     mn_distance = distance.levenshtein(mn_mode, correct_mn)
     ln_distance = distance.levenshtein(ln_mode, correct_ln)
-    fn_correct_count = fn_correct_count + 1 if fn_distance==0 else fn_correct_count
+    fn_correct_count = fn_correct_count + 1 if fn_distance == 0 else fn_correct_count
     mn_correct_count = mn_correct_count + 1 if mn_distance == 0 else mn_correct_count
     ln_correct_count = ln_correct_count + 1 if ln_distance == 0 else ln_correct_count
     fn_distances.append(fn_distance)
     mn_distances.append(mn_distance)
     ln_distances.append(ln_distance)
 
-fn_average_distance = sum(fn_distances)/len(fn_distances)
-mn_average_distance = sum(mn_distances)/len(mn_distances)
-ln_average_distance = sum(ln_distances)/len(ln_distances)
-print("First name average number of letters wrong: %.3f"% fn_average_distance)
-print("Middle name average number of letters wrong: %.3f"% mn_average_distance)
-print("Last name average number of letters wrong: %.3f"% ln_average_distance)
+fn_average_distance = sum(fn_distances) / len(fn_distances)
+mn_average_distance = sum(mn_distances) / len(mn_distances)
+ln_average_distance = sum(ln_distances) / len(ln_distances)
+print("First name average number of letters wrong: %.3f" % fn_average_distance)
+print("Middle name average number of letters wrong: %.3f" % mn_average_distance)
+print("Last name average number of letters wrong: %.3f" % ln_average_distance)
 
-fn_accuracy_rate = fn_correct_count/len(fn_distances)
-mn_accuracy_rate = mn_correct_count/len(mn_distances)
-ln_accuracy_rate = ln_correct_count/len(ln_distances)
+fn_accuracy_rate = fn_correct_count / len(fn_distances)
+mn_accuracy_rate = mn_correct_count / len(mn_distances)
+ln_accuracy_rate = ln_correct_count / len(ln_distances)
 print("First name accuracy: %.3f" % fn_accuracy_rate)
 print("Middle name accuracy: %.3f" % mn_accuracy_rate)
 print("Last name accuracy: %.3f" % ln_accuracy_rate)

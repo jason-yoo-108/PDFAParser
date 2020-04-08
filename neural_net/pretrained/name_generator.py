@@ -1,5 +1,4 @@
 import os
-import torch
 
 from const import *
 from neural_net.pretrained.pretrained_rnn import PretrainedRNN
@@ -51,8 +50,8 @@ class NameGenerator():
 
                 tensor[j][i] = index
         return tensor
-    
-    def lengthTestTensor(self, lengths:list):
+
+    def lengthTestTensor(self, lengths: list):
         tensor = torch.zeros(len(lengths)).type(torch.LongTensor).to(DEVICE)
         for i, length in enumerate(lengths):
             tensor[i] = length[i]

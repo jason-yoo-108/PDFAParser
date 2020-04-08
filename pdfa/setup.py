@@ -1,14 +1,12 @@
-from copy import deepcopy
 import re
+from copy import deepcopy
 
 from .pdfa import PDFA
 from .state import State
 from .symbol import *
 from .transition import Transition
 
-
-
-SPACE_DIST = [0.9, 0.1/3, 0.1/3, 0.1/3]
+SPACE_DIST = [0.9, 0.1 / 3, 0.1 / 3, 0.1 / 3]
 TITLE_DIST = [0., 0.8, 0.15, 0., 0.05]
 FIRST_DIST = [0.01, 0.03, 0.15, 0.2, 0.2, 0.15, 0.1, 0.08, 0.04, 0.04]
 MIDDLE_DIST = [0.15, 0.04, 0.1, 0.15, 0.15, 0.15, 0.1, 0.08, 0.04, 0.04]
@@ -132,10 +130,11 @@ def fill_PDFA_stay_probs(leave_probs, names_to_states, stay_symbol):
     for i in range(len(keys)):
         state = names_to_states[keys[i]]
         target_leave_prob = leave_probs[i]
-        curr_leave_prob = target_leave_prob/p_current_node
+        curr_leave_prob = target_leave_prob / p_current_node
         curr_stay_prob = 1. - curr_leave_prob
         state.set_missing_emission_probs({stay_symbol: curr_stay_prob})
         p_current_node = p_current_node * curr_stay_prob
+
 
 fill_PDFA_stay_probs(SPACE_DIST, SPACE_NAMES_TO_STATES, SPACE)
 fill_PDFA_stay_probs(TITLE_DIST, TITLE_NAMES_TO_STATES, TITLE)
@@ -149,83 +148,83 @@ NAMES_TO_STATES = {
     'START_SOS': State(name='START_SOS', symbols_to_probs={FIRST: 0.4, LAST: 0.4, TITLE: 0.15, SPACE: 0.05}),
     'START_SPACE': PDFA(
         name='START_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={TITLE: 0.1, FIRST: 0.45, LAST: 0.45}
     ),
     'TITLE': PDFA(
         name='TITLE',
-        start_state_name='T1', 
+        start_state_name='T1',
         delta=Transition(names_to_states=deepcopy(TITLE_NAMES_TO_STATES), transition_rules=TITLE_TRANSITION),
         outbound_symbols_to_probs={PERIOD: 0.5, SPACE: 0.45, FIRST: 0.025, LAST: 0.025}
     ),
     'TITLE_P': State(name='TITLE_P', symbols_to_probs={SPACE: 0.95, FIRST: 0.025, LAST: 0.025}),
     'TITLE_SPACE': PDFA(
         name='TITLE_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={FIRST: 0.5, LAST: 0.5}
     ),
     'FIRST_FML': PDFA(
         name='FIRST_FML',
-        start_state_name='F1', 
+        start_state_name='F1',
         delta=Transition(names_to_states=deepcopy(FIRST_NAMES_TO_STATES), transition_rules=FIRST_TRANSITION),
         outbound_symbols_to_probs={SPACE: 0.95, MIDDLE: 0.025, LAST: 0.025}
     ),
     'FIRST_FML_SPACE': PDFA(
         name='FIRST_FML_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={MIDDLE: 0.5, LAST: 0.5}
     ),
     'MIDDLE_FML_1': PDFA(
         name='MIDDLE_FML_1',
-        start_state_name='M1', 
+        start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
         outbound_symbols_to_probs={SPACE: 0.8, PERIOD: 0.175, LAST: 0.025}
     ),
     'MIDDLE_FML_1_P': State(name='MIDDLE_FML_1_P', symbols_to_probs={SPACE: 0.95, MIDDLE: 0.05}),
     'MIDDLE_FML_1_SPACE': PDFA(
         name='MIDDLE_FML_1_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={LAST: 0.8, MIDDLE: 0.2}
     ),
     'MIDDLE_FML_2': PDFA(
         name='MIDDLE_FML_2',
-        start_state_name='M1', 
+        start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
         outbound_symbols_to_probs={SPACE: 0.8, PERIOD: 0.175, LAST: 0.025}
     ),
     'MIDDLE_FML_2_P': State(name='MIDDLE_FML_2_P', symbols_to_probs={SPACE: 0.95, LAST: 0.05}),
     'MIDDLE_FML_2_SPACE': PDFA(
         name='MIDDLE_FML_2_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={LAST: 1.}
     ),
     'LAST_FML': PDFA(
         name='LAST_FML',
-        start_state_name='L1', 
+        start_state_name='L1',
         delta=Transition(names_to_states=deepcopy(LAST_NAMES_TO_STATES), transition_rules=LAST_TRANSITION),
         outbound_symbols_to_probs={EOS_FORMAT: 0.8, SPACE: 0.175, SUFFIX: 0.025}
     ),
     'LAST_LFM': PDFA(
         name='LAST_LFM',
-        start_state_name='L1', 
+        start_state_name='L1',
         delta=Transition(names_to_states=deepcopy(LAST_NAMES_TO_STATES), transition_rules=LAST_TRANSITION),
         outbound_symbols_to_probs={COMMA: 0.95, SPACE: 0.05}
     ),
     'LAST_LFM_C': State(name='LAST_LFM_C', symbols_to_probs={SPACE: 0.95, FIRST: 0.05}),
     'LAST_LFM_SPACE': PDFA(
         name='LAST_LFM_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={FIRST: 1.}
     ),
     'FIRST_LFM': PDFA(
         name='FIRST_LFM',
-        start_state_name='F1', 
+        start_state_name='F1',
         delta=Transition(names_to_states=deepcopy(FIRST_NAMES_TO_STATES), transition_rules=FIRST_TRANSITION),
         outbound_symbols_to_probs={EOS_FORMAT: 0.5, SPACE: 0.475, MIDDLE: 0.025}
     ),
@@ -237,39 +236,39 @@ NAMES_TO_STATES = {
     ),
     'MIDDLE_LFM_1': PDFA(
         name='MIDDLE_LFM_1',
-        start_state_name='M1', 
+        start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
         outbound_symbols_to_probs={SPACE: 0.8, PERIOD: 0.175, SUFFIX: 0.025}
     ),
     'MIDDLE_LFM_1_P': State(name='MIDDLE_LFM_1_P', symbols_to_probs={SPACE: 0.95, MIDDLE: 0.05}),
     'MIDDLE_LFM_1_SPACE': PDFA(
         name='MIDDLE_LFM_1_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={SUFFIX: 0.8, MIDDLE: 0.2}
     ),
     'MIDDLE_LFM_2': PDFA(
         name='MIDDLE_LFM_2',
-        start_state_name='M1', 
+        start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
         outbound_symbols_to_probs={EOS_FORMAT: 0.8, SPACE: 0.1, PERIOD: 0.1}
     ),
     'MIDDLE_LFM_2_P': State(name='MIDDLE_LFM_2_P', symbols_to_probs={EOS_FORMAT: 0.8, SPACE: 0.175, SUFFIX: 0.025}),
     'SUFFIX_SPACE': PDFA(
         name='SUFFIX_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={SUFFIX: 0.95, EOS_FORMAT: 0.05}
     ),
     'SUFFIX': PDFA(
         name='SUFFIX',
-        start_state_name='S1', 
+        start_state_name='S1',
         delta=Transition(names_to_states=deepcopy(SUFFIX_NAMES_TO_STATES), transition_rules=SUFFIX_TRANSITION),
         outbound_symbols_to_probs={EOS_FORMAT: 0.95, SPACE: 0.05}
     ),
     'END_SPACE': PDFA(
         name='END_SPACE',
-        start_state_name='SPACE1', 
+        start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
         outbound_symbols_to_probs={EOS_FORMAT: 1.}
     ),
@@ -278,20 +277,20 @@ NAMES_TO_STATES = {
 
 FULLNAME_TRANSITION_RULES = {
     ('START', SOS_FORMAT): 'START_SOS',
-    ('START_SOS',FIRST): 'FIRST_FML',
-    ('START_SOS',LAST): 'LAST_LFM',
-    ('START_SOS',TITLE): 'TITLE',
-    ('START_SOS',SPACE): 'START_SPACE',
-    ('START_SPACE',FIRST): 'FIRST_FML',
-    ('START_SPACE',LAST): 'LAST_LFM',
-    ('START_SPACE',TITLE): 'TITLE',
-    ('TITLE',PERIOD): 'TITLE_P',
-    ('TITLE',SPACE): 'TITLE_SPACE',
-    ('TITLE',FIRST): 'FIRST_FML',
-    ('TITLE',LAST): 'LAST_LFM',
-    ('TITLE_P',SPACE): 'TITLE_SPACE',
-    ('TITLE_P',FIRST): 'FIRST_FML',
-    ('TITLE_P',LAST): 'LAST_LFM',
+    ('START_SOS', FIRST): 'FIRST_FML',
+    ('START_SOS', LAST): 'LAST_LFM',
+    ('START_SOS', TITLE): 'TITLE',
+    ('START_SOS', SPACE): 'START_SPACE',
+    ('START_SPACE', FIRST): 'FIRST_FML',
+    ('START_SPACE', LAST): 'LAST_LFM',
+    ('START_SPACE', TITLE): 'TITLE',
+    ('TITLE', PERIOD): 'TITLE_P',
+    ('TITLE', SPACE): 'TITLE_SPACE',
+    ('TITLE', FIRST): 'FIRST_FML',
+    ('TITLE', LAST): 'LAST_LFM',
+    ('TITLE_P', SPACE): 'TITLE_SPACE',
+    ('TITLE_P', FIRST): 'FIRST_FML',
+    ('TITLE_P', LAST): 'LAST_LFM',
     ('TITLE_SPACE', FIRST): 'FIRST_FML',
     ('TITLE_SPACE', LAST): 'LAST_LFM',
     ('FIRST_FML', SPACE): 'FIRST_FML_SPACE',
@@ -353,6 +352,7 @@ CANONICAL_PDFA = PDFA(
         transition_rules=FULLNAME_TRANSITION_RULES
     )
 )
+
 
 def generate_name_pdfa() -> PDFA:
     return deepcopy(CANONICAL_PDFA)

@@ -1,28 +1,28 @@
-import pyro
 import torch
 
 from .state import State
 from .symbol import *
 from .transition import Transition
 
+
 class PDFA():
     def __init__(self,
-                name: str,
-                start_state_name: str, 
-                delta: Transition, 
-                device: torch.device = None,
-                outbound_symbols_to_probs: dict = None):
+                 name: str,
+                 start_state_name: str,
+                 delta: Transition,
+                 device: torch.device = None,
+                 outbound_symbols_to_probs: dict = None):
         self.name = name
         self.curr_state = delta.names_to_states[start_state_name]
         self.delta = delta
         self.device = device
         self.fill_incomplete_emission_probs(outbound_symbols_to_probs)
-    
+
     def at_absorbing_state(self) -> bool:
         if isinstance(self.curr_state, PDFA):
             return self.curr_state.at_absorbing_state()
         return self.curr_state.absorbing
-    
+
     def fill_incomplete_emission_probs(self, outbound_symbols_to_probs: dict):
         """
         Fill emission probabilities of non-top-level PDFA states based on
@@ -36,7 +36,7 @@ class PDFA():
             else:
                 if outbound_symbols_to_probs is None or state.complete == True: continue
                 state.set_missing_emission_probs(outbound_symbols_to_probs, normalize=True)
-    
+
     def get_current_state(self) -> State:
         """
         Retrieve the current state of the PDFA. If current state is
@@ -45,7 +45,7 @@ class PDFA():
         if isinstance(self.curr_state, PDFA):
             return self.curr_state.get_current_state()
         return self.curr_state
-    
+
     def get_emission_probs(self) -> list:
         """
         Retrieves the emission probabilities of the current state.
@@ -55,7 +55,7 @@ class PDFA():
         if isinstance(self.curr_state, PDFA):
             return self.curr_state.get_emission_probs()
         return self.curr_state.emission_probs
-    
+
     def get_valid_emission_mask(self) -> list:
         """
         Retrieve an array that has a 1. for indexes of symbols that
@@ -87,6 +87,5 @@ class PDFA():
             next_state = self.delta.transition(self.curr_state, symbol)
             self.curr_state = next_state
             return True
-        
-        return False
 
+        return False
