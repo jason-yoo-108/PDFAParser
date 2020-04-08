@@ -38,7 +38,8 @@ def get_parse_result(sample_trace) -> dict:
         component = ''
         for i in indexes:
             toadd = PRINTABLE[name_index_tensor[i]]
-            if toadd != PAD and toadd != EOS: component += toadd
+            #if toadd != PAD and toadd != EOS: component += toadd
+            component += toadd
         return component
 
     name = sample_trace.nodes['_INPUT']['kwargs']['observations']['output']
