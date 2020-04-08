@@ -22,7 +22,7 @@ parser.add_argument('--num_steps', help='Number of gradient descent steps', narg
 parser.add_argument('--continue_training',
                     help='An int deciding whether to keep training the model with config name',
                     nargs='?',
-                    default=True, type=bool)
+                    default=False, type=bool)
 
 # Parse optional args from command line and save the configurations into a JSON file
 args = parser.parse_args()

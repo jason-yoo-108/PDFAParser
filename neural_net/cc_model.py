@@ -30,7 +30,7 @@ class CharacterClassificationModel(nn.Module):
         self.softmax = nn.Softmax(dim=2)
         self.embed = nn.Embedding(self.input_sz, self.embed_sz, padding_idx=self.input_pad_idx)
         self.encoder_lstm = nn.LSTM(self.embed_sz, encoder_hidden_sz, num_layers=encoder_num_layers, bidirectional=True, dropout=dropout)
-        self.predictor_lstm = nn.LSTM(self.predictor_input_sz, predictor_hidden_sz, num_layers=predictor_num_layers, dropout=dropout)
+        self.predictor_lstm = nn.LSTM(self.predictor_input_sz, predictor_hidden_sz, num_layers=predictor_num_layers)
         self.fc1 = nn.Linear(self.encoder_hidden_sz * 2 + len(output), self.predictor_input_sz)
         self.fc2 = nn.Linear(self.predictor_hidden_sz, self.output_sz)
 
