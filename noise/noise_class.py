@@ -15,7 +15,7 @@ def forbid_noise_class(probs: torch.Tensor, forbidden: list) -> torch.Tensor:
     return probs / torch.sum(probs)
 
 
-def sample_title_noise(title_format_length, rnn: ClassificationDenoisingModel = None,
+def sample_title_noise(title_format_length, title_noise_probs, rnn: ClassificationDenoisingModel = None,
                        encoder_output: torch.Tensor = None) -> tuple:
     title_length, noise_classes = 0, []
     if rnn is not None:
@@ -30,7 +30,7 @@ def sample_title_noise(title_format_length, rnn: ClassificationDenoisingModel = 
             char_noise_class_probs = forbid_noise_class(char_noise_class_probs.squeeze(), [])  # Forbids NOISE_SOS
         else:
             # in model
-            char_noise_class_probs = torch.Tensor(TITLE_NOISE_PROBS).to(DEVICE)
+            char_noise_class_probs = torch.Tensor(title_noise_probs).to(DEVICE)
 
         if i == title_format_length - 1:
             if title_length == 0:
@@ -54,7 +54,7 @@ def sample_title_noise(title_format_length, rnn: ClassificationDenoisingModel = 
     return title_length, noise_classes
 
 
-def sample_name_noise(name_format_length: int, pyro_address: str, rnn: SequenceDenoisingModel = None,
+def sample_name_noise(name_format_length: int, name_noise_probs: float, pyro_address: str, rnn: SequenceDenoisingModel = None,
                       encoder_output: torch.Tensor = None) -> tuple:
     name_length, noise_classes = 0, []
     if rnn is not None:
@@ -67,7 +67,7 @@ def sample_name_noise(name_format_length: int, pyro_address: str, rnn: SequenceD
             char_noise_class_probs, hidden_state = rnn.predict(noise_type, encoder_output[i], hidden_state)
             char_noise_class_probs = forbid_noise_class(char_noise_class_probs.squeeze(), [])  # Forbids NOISE_SOS
         else:
-            char_noise_class_probs = torch.Tensor(NAME_NOISE_PROBS).to(DEVICE)
+            char_noise_class_probs = torch.Tensor(name_noise_probs).to(DEVICE)
 
         if i == name_format_length - 1:
             if name_length == 0:
@@ -85,7 +85,7 @@ def sample_name_noise(name_format_length: int, pyro_address: str, rnn: SequenceD
     return name_length, noise_classes
 
 
-def sample_suffix_noise(suffix_format_length, rnn: ClassificationDenoisingModel = None,
+def sample_suffix_noise(suffix_format_length, suffix_noise_probs, rnn: ClassificationDenoisingModel = None,
                         encoder_output: torch.Tensor = None) -> tuple:
     suffix_length, noise_classes = 0, []
     if rnn is not None:
@@ -98,7 +98,7 @@ def sample_suffix_noise(suffix_format_length, rnn: ClassificationDenoisingModel 
             char_noise_class_probs, hidden_state = rnn.predict(noise_type, encoder_output[i], hidden_state)
             char_noise_class_probs = forbid_noise_class(char_noise_class_probs.squeeze(), [])  # Forbids NOISE_SOS
         else:
-            char_noise_class_probs = torch.Tensor(SUFFIX_NOISE_PROBS).to(DEVICE)
+            char_noise_class_probs = torch.Tensor(suffix_noise_probs).to(DEVICE)
 
         if i == suffix_format_length - 1:
             if suffix_length == 0:

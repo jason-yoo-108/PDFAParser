@@ -31,9 +31,6 @@ NOISE_REPLACE = 'R'
 NOISE_DELETE = 'D'
 NOISE_SOS = '1'
 NOISE = [NOISE_NONE, NOISE_ADD, NOISE_REPLACE, NOISE_DELETE, NOISE_SOS]
-TITLE_NOISE_PROBS = [9 / 10, 1 / 30, 1 / 30, 1 / 30, 0.]
-NAME_NOISE_PROBS = [9 / 10, 1 / 30, 1 / 30, 1 / 30, 0.]
-SUFFIX_NOISE_PROBS = [9 / 10, 1 / 30, 1 / 30, 1 / 30, 0.]
 
 TITLE_LIST = ['Mr', 'Ms', 'Dr', 'Mrs', 'Sir', "Ma'am", 'Madam']
 # Title Probabilities Per Length

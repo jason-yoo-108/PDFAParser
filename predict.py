@@ -16,7 +16,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_json(args.config)
-    name_parser = NameParser(config['rnn_num_layers'], config['rnn_hidden_size'], config['rnn_hidden_size'])
+    name_parser = NameParser(config['rnn_num_layers'], config['rnn_hidden_size'], config['rnn_hidden_size'], peak_prob=1-1e-4)
     name_parser.load_checkpoint(filename=f"{config['session_name']}")
     name_parser.test_mode()
 
