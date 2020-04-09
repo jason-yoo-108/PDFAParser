@@ -14,6 +14,7 @@ parser.add_argument('--true_posterior', help='whether to sample from p(z|x) or q
                     type=bool)
 parser.add_argument('--num_particles', help='# of particles to use for SIS', nargs='?', default=10, type=int)
 parser.add_argument('--num_samples', help='# samples', nargs='?', default=3, type=int)
+parser.add_argument('--parse', help='only parse instead of denoising and parsing', nargs='?', default=False, type=bool)
 parser.add_argument('--noised', help='whether to noise the observed name', nargs='?', default=False, type=bool)
 parser.add_argument('--test_set', help='path of the test set', nargs='?', default='data/test.csv')
 
@@ -32,7 +33,7 @@ fn_distances = []
 mn_distances = []
 ln_distances = []
 
-test_data = pd.read_csv(args.test_set, keep_default_na=False)[:250]
+test_data = pd.read_csv(args.test_set, keep_default_na=False)[:100]
 
 
 def parse_to_append(result):
@@ -52,7 +53,10 @@ def infer(observed_name):
         traces = get_guide_traces(observed_name, name_parser, args.num_samples)
     log_probs = torch.Tensor(list(map(lambda trace: trace.log_prob_sum().item(), traces))).to(DEVICE)
     max_prob_trace = traces[torch.argmax(log_probs, dim=-1).item()]
-    parse = get_full_result(max_prob_trace, name_parser)
+    if args.parse:
+        parse = get_parse_result(max_prob_trace)
+    else:
+        parse = get_full_result(max_prob_trace, name_parser)
     firstname, middlename, lastname = parse['firstname'], parse['middlename'], parse['lastname']
     return firstname, middlename, lastname
 

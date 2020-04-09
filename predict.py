@@ -12,6 +12,7 @@ if __name__ == "__main__":
                         type=bool)
     parser.add_argument('--num_particles', help='# of particles to use for SIS', nargs='?', default=15, type=int)
     parser.add_argument('--num_samples', help='# samples', nargs='?', default=10, type=int)
+    parser.add_argument('--parse', help='only parse instead of denoising and parsing', nargs='?', default=False, type=bool)
     args = parser.parse_args()
 
     config = load_json(args.config)
@@ -26,5 +27,7 @@ if __name__ == "__main__":
 
     for j, sample in enumerate(sample_traces):
         print("Trace Log Probability: %.5f" % sample.log_prob_sum())
-        print(f"Parsed Result: {get_parse_result(sample)}")
-        print(f"Trace Result:  {get_full_result(sample, name_parser)}")
+        if args.parse:
+            print(f"Parsed Result: {get_parse_result(sample)}")
+        else:
+            print(f"Trace Result:  {get_full_result(sample, name_parser)}")
