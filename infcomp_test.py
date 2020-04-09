@@ -34,7 +34,7 @@ fn_distances = []
 mn_distances = []
 ln_distances = []
 
-test_data = pd.read_csv(args.test_set, keep_default_na=False)[:25]
+test_data = pd.read_csv(args.test_set, keep_default_na=False)[:100]
 
 
 def parse_to_append(result):
