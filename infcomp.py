@@ -13,12 +13,14 @@ from utilities.config import *
 
 
 class NameParser():
-    def __init__(self, rnn_num_layers: int, format_rnn_hidden_size: int, dae_hidden_size: int, peak_prob: float = 1.):
+    def __init__(self, rnn_num_layers: int, format_rnn_hidden_size: int, dae_hidden_size: int, peak_prob: float = 1., noise_probs: list = None):
         super().__init__()
 
         self.peak_prob = peak_prob
         config = load_json('config/pretrained/first.json')
         self.output_chars = config['output']
+        if noise_probs is None: noise_probs = [99/100, 1/300, 1/300, 1/300, 0.]
+        self.noise_probs = noise_probs
 
         # Model neural nets instantiation
         self.model_fn = NameGenerator('config/pretrained/first.json', 'nn_model/pretrained/first.path.tar')
@@ -44,24 +46,24 @@ class NameParser():
             components = separate_components(name_format)
 
             if len(components[TITLE]) > 0:
-                title, title_noise = sample_title_and_noise(components[TITLE])
+                title, title_noise = sample_title_and_noise(components[TITLE], self.noise_probs)
                 title_obs_probs = observation_probabilities(title, title_noise, self.peak_prob)
             if len(components[FIRST]) > 0:
-                firstname, firstname_noise = sample_name_and_noise(components[FIRST], self.model_fn,
+                firstname, firstname_noise = sample_name_and_noise(components[FIRST], self.noise_probs, self.model_fn,
                                                                    ADDRESS['firstname'])
                 firstname_obs_probs = observation_probabilities(firstname, firstname_noise, self.peak_prob)
             if len(components[MIDDLE]) > 0:
-                middlenames, middlenames_noise = sample_multiple_name_and_noise(components[MIDDLE], self.model_fn,
+                middlenames, middlenames_noise = sample_multiple_name_and_noise(components[MIDDLE], self.noise_probs, self.model_fn,
                                                                                 ADDRESS['middlename'])
                 middlenames_obs_probs = []
                 for middlename, middlename_noise in zip(middlenames, middlenames_noise):
                     middlename_obs_probs = observation_probabilities(middlename, middlename_noise, self.peak_prob)
                     middlenames_obs_probs.append(middlename_obs_probs)
             if len(components[LAST]) > 0:
-                lastname, lastname_noise = sample_name_and_noise(components[LAST], self.model_ln, ADDRESS['lastname'])
+                lastname, lastname_noise = sample_name_and_noise(components[LAST], self.noise_probs, self.model_ln, ADDRESS['lastname'])
                 lastname_obs_probs = observation_probabilities(lastname, lastname_noise, self.peak_prob)
             if len(components[SUFFIX]) > 0:
-                suffix, suffix_noise = sample_suffix_and_noise(components[SUFFIX])
+                suffix, suffix_noise = sample_suffix_and_noise(components[SUFFIX], self.noise_probs)
                 suffix_obs_probs = observation_probabilities(suffix, suffix_noise, self.peak_prob)
 
             fullname_obs_probs = combine_observation_probabilities(
@@ -95,12 +97,12 @@ class NameParser():
         if len(name_parse[TITLE]) > 0:
             pyro.module("title", self.guide_title)
             encoder_output, encoder_hidden = self.guide_title.encode(name_parse[TITLE][0])
-            title, title_noise = sample_title_and_noise(name_parse[TITLE], self.guide_title, encoder_output,
+            title, title_noise = sample_title_and_noise(name_parse[TITLE], self.noise_probs, self.guide_title, encoder_output,
                                                         encoder_hidden)
         if len(name_parse[FIRST]) > 0:
             pyro.module("first", self.guide_fn)
             encoder_output, encoder_hidden = self.guide_fn.encode(name_parse[FIRST][0])
-            firstname, firstname_noise = sample_name_and_noise(name_parse[FIRST], self.guide_fn, ADDRESS['firstname'],
+            firstname, firstname_noise = sample_name_and_noise(name_parse[FIRST], self.noise_probs, self.guide_fn, ADDRESS['firstname'],
                                                                encoder_output, encoder_hidden)
         if len(name_parse[MIDDLE]) > 0:
             pyro.module("first", self.guide_fn)
@@ -110,27 +112,27 @@ class NameParser():
                 encoder_output, encoder_hidden = self.guide_fn.encode(middle_parse)
                 encoder_outputs.append(encoder_output)
                 encoder_hiddens.append(encoder_hidden)
-            middlenames, middlenames_noise = sample_multiple_name_and_noise(name_parse[MIDDLE], self.guide_fn,
+            middlenames, middlenames_noise = sample_multiple_name_and_noise(name_parse[MIDDLE], self.noise_probs, self.guide_fn,
                                                                             ADDRESS['middlename'], encoder_outputs,
                                                                             encoder_hiddens)
         if len(name_parse[LAST]) > 0:
             pyro.module("last", self.guide_ln)
             encoder_output, encoder_hidden = self.guide_ln.encode(name_parse[LAST][0])
-            lastname, lastname_noise = sample_name_and_noise(name_parse[LAST], self.guide_ln, ADDRESS['lastname'],
+            lastname, lastname_noise = sample_name_and_noise(name_parse[LAST], self.noise_probs, self.guide_ln, ADDRESS['lastname'],
                                                              encoder_output, encoder_hidden)
         if len(name_parse[SUFFIX]) > 0:
             pyro.module("suffix", self.guide_suffix)
             encoder_output, encoder_hidden = self.guide_suffix.encode(name_parse[SUFFIX][0])
-            suffix, suffix_noise = sample_suffix_and_noise(name_parse[SUFFIX], self.guide_suffix, encoder_output,
+            suffix, suffix_noise = sample_suffix_and_noise(name_parse[SUFFIX], self.noise_probs, self.guide_suffix, encoder_output,
                                                            encoder_hidden)
-
-        return {
+        result = {
             'firstname': ''.join(firstname),
             'middlename': ' '.join([''.join(middlename) for middlename in middlenames]),
             'lastname': ''.join(lastname),
             'title': ''.join(title),
             'suffix': ''.join(suffix)
         }
+        return result
 
     def index_encode(self, name: str) -> torch.Tensor:
         if len(name) > MAX_STRING_LEN - 2: raise Exception(f"Name must be shorter than {MAX_STRING_LEN - 2}")
@@ -140,8 +142,10 @@ class NameParser():
             result[i] = PRINTABLE.index(name[i])
         return result
     
-    def test_mode(self):
+    def test_mode(self, noise_probs=None):
         # Call at inference time
+        if noise_probs is None: noise_probs = [1-1e-4]+[1-(1-1e-4)/3]*3+[0.]
+        self.noise_probs = noise_probs
         self.guide_format.test_mode()
         self.guide_title.test_mode()
         self.guide_fn.test_mode()

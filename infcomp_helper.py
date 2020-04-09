@@ -79,13 +79,14 @@ def separate_name(name_format: list, name: torch.Tensor) -> dict:
     return result
 
 
-def sample_title_and_noise(title_format: list, rnn: ClassificationDenoisingModel = None, encoder_output=None,
+def sample_title_and_noise(title_format: list, title_noise_probs: list, rnn: ClassificationDenoisingModel = None, encoder_output=None,
                            encoder_hidden=None) -> tuple:
     """
     Samples a title based on title_format and noise_classes.
     Ensures title_length is either 2, 3, or 5.
     """
-    title_length, noise_classes = sample_title_noise(title_format_length=len(title_format[0]), rnn=rnn,
+    title_length, noise_classes = sample_title_noise(title_format_length=len(title_format[0]), 
+                                                     title_noise_probs=title_noise_probs, rnn=rnn,
                                                      encoder_output=encoder_output)
 
     if rnn is None:
@@ -113,12 +114,13 @@ def sample_title_and_noise(title_format: list, rnn: ClassificationDenoisingModel
     return title, noise_classes
 
 
-def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_output=None, encoder_hidden=None) -> tuple:
+def sample_name_and_noise(name_format: list, name_noise_probs: list, rnn, pyro_address: str, encoder_output=None, encoder_hidden=None) -> tuple:
     name = []
     in_model = isinstance(rnn, NameGenerator)
 
     if in_model:
         name_length, noise_classes = sample_name_noise(name_format_length=len(name_format[0]),
+                                                       name_noise_probs=name_noise_probs,
                                                        pyro_address=pyro_address)
         rnn_input = rnn.indexTensor([[SOS]], 1).to(DEVICE)
         length_input = rnn.lengthTestTensor([[name_length]]).to(DEVICE)
@@ -132,6 +134,7 @@ def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_out
             rnn_input = rnn.indexTensor([[char]], 1).to(DEVICE)
     else:
         name_length, noise_classes = sample_name_noise(name_format_length=len(name_format[0]),
+                                                       name_noise_probs=name_noise_probs,
                                                        pyro_address=pyro_address, rnn=rnn,
                                                        encoder_output=encoder_output)
 
@@ -146,26 +149,27 @@ def sample_name_and_noise(name_format: list, rnn, pyro_address: str, encoder_out
     return name, noise_classes
 
 
-def sample_multiple_name_and_noise(name_formats: list, rnn, pyro_address: str, encoder_outputs=None,
+def sample_multiple_name_and_noise(name_formats: list, name_noise_probs: list, rnn, pyro_address: str, encoder_outputs=None,
                                    encoder_hiddens=None) -> tuple:
     names, multiple_noise_classes = [], []
     for i, name_format in enumerate(name_formats):
         encoder_output = encoder_outputs[i] if encoder_outputs is not None else None
         encoder_hidden = encoder_hiddens[i] if encoder_hiddens is not None else None
-        name, noise_classes = sample_name_and_noise([name_format], rnn, f"{pyro_address}_{i}", encoder_output,
+        name, noise_classes = sample_name_and_noise([name_format], name_noise_probs, rnn, f"{pyro_address}_{i}", encoder_output,
                                                     encoder_hidden)
         names.append(name)
         multiple_noise_classes.append(noise_classes)
     return names, multiple_noise_classes
 
 
-def sample_suffix_and_noise(suffix_format: list, rnn: ClassificationDenoisingModel = None, encoder_output=None,
+def sample_suffix_and_noise(suffix_format: list, suffix_noise_probs: list, rnn: ClassificationDenoisingModel = None, encoder_output=None,
                             encoder_hidden=None) -> tuple:
     """
     Samples a suffix based on suffix_format and noise_classes.
     """
-    suffix_length, noise_classes = sample_suffix_noise(suffix_format_length=len(suffix_format[0]), rnn=rnn,
-                                                       encoder_output=encoder_output)
+    suffix_length, noise_classes = sample_suffix_noise(suffix_format_length=len(suffix_format[0]),
+                                                       suffix_noise_probs=suffix_noise_probs,
+                                                       rnn=rnn, encoder_output=encoder_output)
 
     if rnn is None:
         # In model
