@@ -33,12 +33,12 @@ def get_parse_result(sample_trace) -> dict:
             prev_index = i
         else:
             discontinuity_index = i
+            break
 
     def index_to_component(name_index_tensor, indexes) -> str:
         component = ''
         for i in indexes:
             toadd = PRINTABLE[name_index_tensor[i]]
-            #if toadd != PAD and toadd != EOS: component += toadd
             component += toadd
         return component
 
