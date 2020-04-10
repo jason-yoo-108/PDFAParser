@@ -44,9 +44,8 @@ def get_parse_result(sample_trace) -> dict:
 
     name = sample_trace.nodes['_INPUT']['kwargs']['observations']['output']
     if discontinuity_index > 0:
-        middle_component = index_to_component(name, middle[:discontinuity_index]) + ' ' + index_to_component(name,
-                                                                                                             middle[
-                                                                                                             discontinuity_index:])
+        p = middle.index(discontinuity_index)
+        middle_component = index_to_component(name, middle[:p]) + ' ' + index_to_component(name, middle[p:])
     else:
         middle_component = index_to_component(name, middle)
 

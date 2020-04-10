@@ -270,6 +270,8 @@ def combine_observation_probabilities(name_format: list, title: torch.Tensor, fi
                 combined_probs.append(insert_peaked_probs(COMMA, peak_prob))
             elif f == PERIOD:
                 combined_probs.append(insert_peaked_probs(PERIOD, peak_prob))
+            elif f == SOS_FORMAT:
+                combined_probs.append(insert_peaked_probs(SOS, peak_prob))
             elif f == EOS_FORMAT:
                 combined_probs.append(insert_peaked_probs(EOS, peak_prob))
             else:
