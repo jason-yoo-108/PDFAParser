@@ -1,4 +1,5 @@
 from const import PRINTABLE, NUM_PRINTABLE
+import string
 
 CHARACTER_REPLACEMENT = dict()
 CHARACTER_REPLACEMENT['A'] = 'QSZWXa'
@@ -71,7 +72,7 @@ def insert_peaked_probs(char: str, peak_prob: float) -> list:
     return char_prob
 
 
-def insert_noise_probs(character: str, nearby_char_total_prob: float = .8) -> list:
+def insert_noise_probs(character: str, nearby_char_total_prob: float = .8, undo_cap: bool = False) -> list:
     char_prob = []
 
     if character in CHARACTER_REPLACEMENT:
@@ -88,6 +89,12 @@ def insert_noise_probs(character: str, nearby_char_total_prob: float = .8) -> li
                 char_prob[i] = nearby_char_prob
             else:
                 char_prob[i] = non_near_char_prob
+
+        # If the first word and lowercase, very high chance of capital
+        if undo_cap and character in string.ascii_uppercase:
+            char_prob = [non_near_char_prob] * NUM_PRINTABLE
+            char_prob[PRINTABLE.index(character.lower())] = nearby_char_total_prob
+            return char_prob
     else:
         char_prob = [1 / NUM_PRINTABLE] * NUM_PRINTABLE
 

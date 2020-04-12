@@ -212,7 +212,8 @@ def observation_probabilities(original: list, noise_classes: list, peak_prob: fl
             i += 2
         elif noise_class == NOISE_REPLACE:
             # JASON XRXXX => JXSON
-            noised_tensor.append(insert_noise_probs(original[i]))
+            undo_cap = True if i == 0 else False
+            noised_tensor.append(insert_noise_probs(original[i], undo_cap=undo_cap))
             i += 1
         elif noise_class == NOISE_DELETE:
             # JASON XDXXXX => JXASON

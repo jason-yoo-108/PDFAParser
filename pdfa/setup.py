@@ -9,7 +9,7 @@ from .transition import Transition
 SPACE_DIST = [0.9, 0.1 / 3, 0.1 / 3, 0.1 / 3]
 TITLE_DIST = [0., 0.8, 0.15, 0., 0.05]
 FIRST_DIST = [0.01, 0.03, 0.15, 0.2, 0.2, 0.15, 0.1, 0.08, 0.04, 0.04]
-MIDDLE_DIST = [0.15, 0.04, 0.1, 0.15, 0.15, 0.15, 0.1, 0.08, 0.04, 0.04]
+MIDDLE_DIST = [0.2, 0.04, 0.1, 0.1, 0.15, 0.15, 0.1, 0.08, 0.04, 0.04]
 LAST_DIST = [0.01, 0.03, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12]
 SUFFIX_DIST = [0.02, 0.49, 0.49]
 
@@ -62,6 +62,7 @@ FIRST_TRANSITION = {
 }
 MIDDLE_NAMES_TO_STATES = {
     'M1': State(name='M1', symbols_to_probs={}, complete=False),
+    'M1_P': State(name='M1_P', symbols_to_probs={}, complete=False),
     'M2': State(name='M2', symbols_to_probs={}, complete=False),
     'M3': State(name='M3', symbols_to_probs={}, complete=False),
     'M4': State(name='M4', symbols_to_probs={}, complete=False),
@@ -73,6 +74,7 @@ MIDDLE_NAMES_TO_STATES = {
     'M10': State(name='M10', symbols_to_probs={}, complete=False),
 }
 MIDDLE_TRANSITION = {
+    ('M1', PERIOD): 'M1_P',
     ('M1', MIDDLE): 'M2',
     ('M2', MIDDLE): 'M3',
     ('M3', MIDDLE): 'M4',
@@ -124,7 +126,8 @@ def fill_PDFA_stay_probs(leave_probs, names_to_states, stay_symbol):
     leave_probs: The probability of leaving the sub-PDFA at i-th index.
     names_to_states: A dictionary that maps state names to state objects.
     """
-    keys = sorted(names_to_states.keys(), key=lambda k: int(re.findall(r'\d+', k)[0]))
+    keys = list(filter(lambda el: len(re.findall(r'\d+$', el))>0, names_to_states.keys()))
+    keys = sorted(keys, key=lambda k: int(re.findall(r'\d+', k)[0]))
     p_current_node = 1.
 
     for i in range(len(keys)):
@@ -140,6 +143,12 @@ fill_PDFA_stay_probs(SPACE_DIST, SPACE_NAMES_TO_STATES, SPACE)
 fill_PDFA_stay_probs(TITLE_DIST, TITLE_NAMES_TO_STATES, TITLE)
 fill_PDFA_stay_probs(FIRST_DIST, FIRST_NAMES_TO_STATES, FIRST)
 fill_PDFA_stay_probs(MIDDLE_DIST, MIDDLE_NAMES_TO_STATES, MIDDLE)
+
+# Probability of adding a period after the initial middle name
+m1_state = MIDDLE_NAMES_TO_STATES['M1']
+m1_period_prob = (1.-m1_state.symbols_to_probs[MIDDLE])/2
+m1_state.set_missing_emission_probs({PERIOD: m1_period_prob})
+
 fill_PDFA_stay_probs(LAST_DIST, LAST_NAMES_TO_STATES, LAST)
 fill_PDFA_stay_probs(SUFFIX_DIST, SUFFIX_NAMES_TO_STATES, SUFFIX)
 
@@ -181,9 +190,8 @@ NAMES_TO_STATES = {
         name='MIDDLE_FML_1',
         start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
-        outbound_symbols_to_probs={SPACE: 0.8, PERIOD: 0.175, LAST: 0.025}
+        outbound_symbols_to_probs={SPACE: 0.95, LAST: 0.05}
     ),
-    'MIDDLE_FML_1_P': State(name='MIDDLE_FML_1_P', symbols_to_probs={SPACE: 0.95, MIDDLE: 0.05}),
     'MIDDLE_FML_1_SPACE': PDFA(
         name='MIDDLE_FML_1_SPACE',
         start_state_name='SPACE1',
@@ -194,9 +202,8 @@ NAMES_TO_STATES = {
         name='MIDDLE_FML_2',
         start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
-        outbound_symbols_to_probs={SPACE: 0.8, PERIOD: 0.175, LAST: 0.025}
+        outbound_symbols_to_probs={SPACE: 0.95, LAST: 0.05}
     ),
-    'MIDDLE_FML_2_P': State(name='MIDDLE_FML_2_P', symbols_to_probs={SPACE: 0.95, LAST: 0.05}),
     'MIDDLE_FML_2_SPACE': PDFA(
         name='MIDDLE_FML_2_SPACE',
         start_state_name='SPACE1',
@@ -226,7 +233,7 @@ NAMES_TO_STATES = {
         name='FIRST_LFM',
         start_state_name='F1',
         delta=Transition(names_to_states=deepcopy(FIRST_NAMES_TO_STATES), transition_rules=FIRST_TRANSITION),
-        outbound_symbols_to_probs={EOS_FORMAT: 0.5, SPACE: 0.475, MIDDLE: 0.025}
+        outbound_symbols_to_probs={EOS_FORMAT: 0.5, SPACE: 0.4, SUFFIX: 0.05, MIDDLE: 0.05}
     ),
     'FIRST_LFM_SPACE': PDFA(
         name='FIRST_LFM_SPACE',
@@ -238,9 +245,8 @@ NAMES_TO_STATES = {
         name='MIDDLE_LFM_1',
         start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
-        outbound_symbols_to_probs={SPACE: 0.5, EOS_FORMAT: 0.3, PERIOD: 0.175, SUFFIX: 0.025}
+        outbound_symbols_to_probs={SPACE: 0.6, EOS_FORMAT: 0.35, SUFFIX: 0.05}
     ),
-    'MIDDLE_LFM_1_P': State(name='MIDDLE_LFM_1_P', symbols_to_probs={SPACE: 0.475, EOS_FORMAT: 0.475, MIDDLE: 0.05}),
     'MIDDLE_LFM_1_SPACE': PDFA(
         name='MIDDLE_LFM_1_SPACE',
         start_state_name='SPACE1',
@@ -251,9 +257,8 @@ NAMES_TO_STATES = {
         name='MIDDLE_LFM_2',
         start_state_name='M1',
         delta=Transition(names_to_states=deepcopy(MIDDLE_NAMES_TO_STATES), transition_rules=MIDDLE_TRANSITION),
-        outbound_symbols_to_probs={EOS_FORMAT: 0.8, SPACE: 0.1, PERIOD: 0.1}
+        outbound_symbols_to_probs={EOS_FORMAT: 0.8, SPACE: 0.15, SUFFIX: 0.05}
     ),
-    'MIDDLE_LFM_2_P': State(name='MIDDLE_LFM_2_P', symbols_to_probs={EOS_FORMAT: 0.8, SPACE: 0.175, SUFFIX: 0.025}),
     'SUFFIX_SPACE': PDFA(
         name='SUFFIX_SPACE',
         start_state_name='SPACE1',
@@ -264,8 +269,9 @@ NAMES_TO_STATES = {
         name='SUFFIX',
         start_state_name='S1',
         delta=Transition(names_to_states=deepcopy(SUFFIX_NAMES_TO_STATES), transition_rules=SUFFIX_TRANSITION),
-        outbound_symbols_to_probs={EOS_FORMAT: 0.95, SPACE: 0.05}
+        outbound_symbols_to_probs={EOS_FORMAT: 0.75, PERIOD: 0.2, SPACE: 0.05}
     ),
+    'SUFFIX_P': State(name='SUFFIX_P', symbols_to_probs={EOS_FORMAT: 0.95, SPACE: 0.05}),
     'END_SPACE': PDFA(
         name='END_SPACE',
         start_state_name='SPACE1',
@@ -299,17 +305,11 @@ FULLNAME_TRANSITION_RULES = {
     ('FIRST_FML_SPACE', MIDDLE): 'MIDDLE_FML_1',
     ('FIRST_FML_SPACE', LAST): 'LAST_FML',
     ('MIDDLE_FML_1', SPACE): 'MIDDLE_FML_1_SPACE',
-    ('MIDDLE_FML_1', PERIOD): 'MIDDLE_FML_1_P',
     ('MIDDLE_FML_1', LAST): 'LAST_FML',
-    ('MIDDLE_FML_1_P', SPACE): 'MIDDLE_FML_1_SPACE',
-    ('MIDDLE_FML_1_P', MIDDLE): 'MIDDLE_FML_2',
     ('MIDDLE_FML_1_SPACE', LAST): 'LAST_FML',
     ('MIDDLE_FML_1_SPACE', MIDDLE): 'MIDDLE_FML_2',
     ('MIDDLE_FML_2', SPACE): 'MIDDLE_FML_2_SPACE',
-    ('MIDDLE_FML_2', PERIOD): 'MIDDLE_FML_2_P',
     ('MIDDLE_FML_2', LAST): 'LAST_FML',
-    ('MIDDLE_FML_2_P', SPACE): 'MIDDLE_FML_2_SPACE',
-    ('MIDDLE_FML_2_P', LAST): 'LAST_FML',
     ('MIDDLE_FML_2_SPACE', LAST): 'LAST_FML',
     ('LAST_FML', EOS_FORMAT): 'END',
     ('LAST_FML', SPACE): 'SUFFIX_SPACE',
@@ -321,30 +321,27 @@ FULLNAME_TRANSITION_RULES = {
     ('LAST_LFM_SPACE', FIRST): 'FIRST_LFM',
     ('FIRST_LFM', EOS_FORMAT): 'END',
     ('FIRST_LFM', SPACE): 'FIRST_LFM_SPACE',
+    ('FIRST_LFM', SUFFIX): 'SUFFIX',
     ('FIRST_LFM', MIDDLE): 'MIDDLE_LFM_1',
     ('FIRST_LFM_SPACE', MIDDLE): 'MIDDLE_LFM_1',
     ('FIRST_LFM_SPACE', SUFFIX): 'SUFFIX',
     ('FIRST_LFM_SPACE', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_1', SPACE): 'MIDDLE_LFM_1_SPACE',
     ('MIDDLE_LFM_1', EOS_FORMAT): 'END',
-    ('MIDDLE_LFM_1', PERIOD): 'MIDDLE_LFM_1_P',
     ('MIDDLE_LFM_1', SUFFIX): 'SUFFIX',
-    ('MIDDLE_LFM_1_P', SPACE): 'MIDDLE_LFM_1_SPACE',
-    ('MIDDLE_LFM_1_P', EOS_FORMAT): 'END',
-    ('MIDDLE_LFM_1_P', MIDDLE): 'MIDDLE_LFM_2',
     ('MIDDLE_LFM_1_SPACE', SUFFIX): 'SUFFIX',
     ('MIDDLE_LFM_1_SPACE', MIDDLE): 'MIDDLE_LFM_2',
     ('MIDDLE_LFM_1_SPACE', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_2', EOS_FORMAT): 'END',
     ('MIDDLE_LFM_2', SPACE): 'SUFFIX_SPACE',
-    ('MIDDLE_LFM_2', PERIOD): 'MIDDLE_LFM_2_P',
-    ('MIDDLE_LFM_2_P', EOS_FORMAT): 'END',
-    ('MIDDLE_LFM_2_P', SPACE): 'SUFFIX_SPACE',
-    ('MIDDLE_LFM_2_P', SUFFIX): 'SUFFIX',
+    ('MIDDLE_LFM_2', SUFFIX): 'SUFFIX',
     ('SUFFIX_SPACE', SUFFIX): 'SUFFIX',
     ('SUFFIX_SPACE', EOS_FORMAT): 'END',
     ('SUFFIX', EOS_FORMAT): 'END',
     ('SUFFIX', SPACE): 'END_SPACE',
+    ('SUFFIX', PERIOD): 'SUFFIX_P',
+    ('SUFFIX_P', EOS_FORMAT): 'END',
+    ('SUFFIX_P', SPACE): 'END_SPACE',
     ('END_SPACE', EOS_FORMAT): 'END',
 }
 

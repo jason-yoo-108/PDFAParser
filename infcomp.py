@@ -75,8 +75,7 @@ class NameParser():
                 suffix=suffix_obs_probs,
                 peak_prob=self.peak_prob
             )
-            pyro.sample("output", pyro.distributions.Categorical(fullname_obs_probs), obs=observations["output"])
-
+            pyro.sample("output", pyro.distributions.Categorical(fullname_obs_probs), obs=observations['output'])
         return {
             'firstname': ''.join(firstname),
             'middlename': ' '.join([''.join(middlename) for middlename in middlenames]),
