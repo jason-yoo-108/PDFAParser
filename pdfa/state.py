@@ -25,6 +25,8 @@ class State():
 
     def set_missing_emission_probs(self, extra_symbols_to_probs: dict, normalize: bool = False):
         # Only call on start of the program
+        # Sets (partial) probability values in extra_symbols_to_probs into self.symbols_to_probs
+        # If normalize is true, scale the probs in extra_symbols_to_probs to fill the unallocated probabilities
         total_unallocated_probs = 1. - sum(self.symbols_to_probs.values())
         for symbol, prob in extra_symbols_to_probs.items():
             if normalize:
