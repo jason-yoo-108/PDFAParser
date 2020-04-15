@@ -20,6 +20,7 @@ parser.add_argument('--char_error_rate', help="Probability of randomly permuting
 parser.add_argument('--lr', help='Learning rate', nargs='?', default=0.001, type=float)
 parser.add_argument('--num_particles', help='Number of particles to evaluate for loss', nargs='?', default=10, type=int)
 parser.add_argument('--num_steps', help='Number of gradient descent steps', nargs='?', default=50000, type=int)
+parser.add_argument('--noise_probs', help='Probability of applying a character level noise to each character', nargs='?', default=0.05, type=float)
 parser.add_argument('--continue_training',
                     help='An int deciding whether to keep training the model with config name',
                     nargs='?',
@@ -33,6 +34,7 @@ to_save = {
     'rnn_hidden_size': args.rnn_hidden_size,
     'rnn_num_layers': args.rnn_num_layers,
     'char_error_rate': args.char_error_rate,
+    'noise_probs': args.noise_probs,
     'lr': args.lr,
     'num_steps': args.num_steps,
     'num_particles': args.num_particles,
@@ -41,7 +43,7 @@ to_save = {
 save_json(f'config/{SESSION_NAME}.json', to_save)
 
 name_parser = NameParser(rnn_num_layers=args.rnn_num_layers, format_rnn_hidden_size=args.rnn_hidden_size,
-                         dae_hidden_size=args.rnn_hidden_size, peak_prob=1. - args.char_error_rate)
+                         dae_hidden_size=args.rnn_hidden_size, peak_prob=1. - args.char_error_rate, noise_probs=args.noise_probs)
 optimizer = pyro.optim.Adam({'lr': args.lr})
 
 if args.continue_training == 1:

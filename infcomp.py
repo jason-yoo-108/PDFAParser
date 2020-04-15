@@ -13,14 +13,13 @@ from utilities.config import *
 
 
 class NameParser():
-    def __init__(self, rnn_num_layers: int, format_rnn_hidden_size: int, dae_hidden_size: int, peak_prob: float = 1., noise_probs: list = None):
+    def __init__(self, rnn_num_layers: int, format_rnn_hidden_size: int, dae_hidden_size: int, peak_prob: float = 1., noise_probs: float = 0.05):
         super().__init__()
 
         self.peak_prob = peak_prob
         config = load_json('config/pretrained/first.json')
         self.output_chars = config['output']
-        if noise_probs is None: noise_probs = [99/100, 1/300, 1/300, 1/300, 0.]
-        self.noise_probs = noise_probs
+        self.noise_probs = [1.-noise_probs, noise_probs/3, noise_probs/3, noise_probs/3, 0.]
 
         # Model neural nets instantiation
         self.model_fn = NameGenerator('config/pretrained/first.json', 'nn_model/pretrained/first.path.tar')
