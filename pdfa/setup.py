@@ -6,7 +6,7 @@ from .state import State
 from .symbol import *
 from .transition import Transition
 
-SPACE_DIST = [0.9, 0.1 / 3, 0.1 / 3, 0.1 / 3]
+SPACE_DIST = [0.9, 0.1/3, 0.1/3, 0.1/3]
 TITLE_DIST = [0., 0.8, 0.15, 0., 0.05]
 FIRST_DIST = [0.01, 0.03, 0.15, 0.2, 0.2, 0.15, 0.1, 0.08, 0.04, 0.04]
 MIDDLE_DIST = [0.2, 0.04, 0.1, 0.1, 0.15, 0.15, 0.1, 0.08, 0.04, 0.04]
@@ -39,6 +39,7 @@ TITLE_TRANSITION = {
 }
 FIRST_NAMES_TO_STATES = {
     'F1': State(name='F1', symbols_to_probs={}, complete=False),
+    'F1_P': State(name='F1_P', symbols_to_probs={}, complete=False),
     'F2': State(name='F2', symbols_to_probs={}, complete=False),
     'F3': State(name='F3', symbols_to_probs={}, complete=False),
     'F4': State(name='F4', symbols_to_probs={}, complete=False),
@@ -50,6 +51,7 @@ FIRST_NAMES_TO_STATES = {
     'F10': State(name='F10', symbols_to_probs={}, complete=False),
 }
 FIRST_TRANSITION = {
+    ('F1', PERIOD): 'F1_P',
     ('F1', FIRST): 'F2',
     ('F2', FIRST): 'F3',
     ('F3', FIRST): 'F4',
@@ -87,6 +89,7 @@ MIDDLE_TRANSITION = {
 }
 LAST_NAMES_TO_STATES = {
     'L1': State(name='L1', symbols_to_probs={}, complete=False),
+    'L1_P': State(name='L1_P', symbols_to_probs={}, complete=False),
     'L2': State(name='L2', symbols_to_probs={}, complete=False),
     'L3': State(name='L3', symbols_to_probs={}, complete=False),
     'L4': State(name='L4', symbols_to_probs={}, complete=False),
@@ -98,6 +101,7 @@ LAST_NAMES_TO_STATES = {
     'L10': State(name='L10', symbols_to_probs={}, complete=False),
 }
 LAST_TRANSITION = {
+    ('L1', PERIOD): 'L1_P',
     ('L1', LAST): 'L2',
     ('L2', LAST): 'L3',
     ('L3', LAST): 'L4',
@@ -143,14 +147,21 @@ fill_PDFA_stay_probs(SPACE_DIST, SPACE_NAMES_TO_STATES, SPACE)
 fill_PDFA_stay_probs(TITLE_DIST, TITLE_NAMES_TO_STATES, TITLE)
 fill_PDFA_stay_probs(FIRST_DIST, FIRST_NAMES_TO_STATES, FIRST)
 fill_PDFA_stay_probs(MIDDLE_DIST, MIDDLE_NAMES_TO_STATES, MIDDLE)
+fill_PDFA_stay_probs(LAST_DIST, LAST_NAMES_TO_STATES, LAST)
+fill_PDFA_stay_probs(SUFFIX_DIST, SUFFIX_NAMES_TO_STATES, SUFFIX)
 
+# Probability of adding a period after the initial first name
+f1_state = FIRST_NAMES_TO_STATES['F1']
+f1_period_prob = (1.-f1_state.symbols_to_probs[FIRST])/2
+f1_state.set_missing_emission_probs({PERIOD: f1_period_prob})
 # Probability of adding a period after the initial middle name
 m1_state = MIDDLE_NAMES_TO_STATES['M1']
 m1_period_prob = (1.-m1_state.symbols_to_probs[MIDDLE])/2
 m1_state.set_missing_emission_probs({PERIOD: m1_period_prob})
-
-fill_PDFA_stay_probs(LAST_DIST, LAST_NAMES_TO_STATES, LAST)
-fill_PDFA_stay_probs(SUFFIX_DIST, SUFFIX_NAMES_TO_STATES, SUFFIX)
+# Probability of adding a period after the initial last name
+l1_state = LAST_NAMES_TO_STATES['L1']
+l1_period_prob = (1.-l1_state.symbols_to_probs[LAST])/2
+l1_state.set_missing_emission_probs({PERIOD: l1_period_prob})
 
 NAMES_TO_STATES = {
     'START': State(name='START', symbols_to_probs={SOS_FORMAT: 1.}),
@@ -184,7 +195,7 @@ NAMES_TO_STATES = {
         name='FIRST_FML_SPACE',
         start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
-        outbound_symbols_to_probs={MIDDLE: 0.5, LAST: 0.5}
+        outbound_symbols_to_probs={MIDDLE: 0.6, LAST: 0.4}
     ),
     'MIDDLE_FML_1': PDFA(
         name='MIDDLE_FML_1',
@@ -196,7 +207,7 @@ NAMES_TO_STATES = {
         name='MIDDLE_FML_1_SPACE',
         start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
-        outbound_symbols_to_probs={LAST: 0.8, MIDDLE: 0.2}
+        outbound_symbols_to_probs={LAST: 0.7, MIDDLE: 0.3}
     ),
     'MIDDLE_FML_2': PDFA(
         name='MIDDLE_FML_2',
@@ -251,7 +262,7 @@ NAMES_TO_STATES = {
         name='MIDDLE_LFM_1_SPACE',
         start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
-        outbound_symbols_to_probs={SUFFIX: 0.7, MIDDLE: 0.2, EOS_FORMAT: 0.1}
+        outbound_symbols_to_probs={SUFFIX: 0.6, MIDDLE: 0.3, EOS_FORMAT: 0.1}
     ),
     'MIDDLE_LFM_2': PDFA(
         name='MIDDLE_LFM_2',
