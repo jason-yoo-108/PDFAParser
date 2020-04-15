@@ -76,14 +76,18 @@ class NameParser():
                 suffix=suffix_obs_probs,
                 peak_prob=self.peak_prob
             )
-            pyro.sample("output", pyro.distributions.Categorical(fullname_obs_probs), obs=observations['output'])
-        return {
+            output = pyro.sample("output", pyro.distributions.Categorical(fullname_obs_probs), obs=observations['output'])
+
+        parse = {
             'firstname': ''.join(firstname),
             'middlename': ' '.join([''.join(middlename) for middlename in middlenames]),
             'lastname': ''.join(lastname),
             'title': ''.join(title),
             'suffix': ''.join(suffix)
         }
+        #print(''.join([PRINTABLE[el] for el in output]))
+        #print(parse)
+        return parse
 
     def guide(self, observations=None):
         observed = observations["output"]
@@ -149,6 +153,7 @@ class NameParser():
         self.guide_format.test_mode()
         self.guide_title.test_mode()
         self.guide_fn.test_mode()
+        self.guide_mn.test_mode()
         self.guide_ln.test_mode()
         self.guide_suffix.test_mode()
     
@@ -163,7 +168,7 @@ class NameParser():
         name_content = torch.load(name_fp, map_location=DEVICE)
         # name content
         self.guide_fn.load_state_dict(name_content['guide_fn'])
-        self.guide_ln.load_state_dict(name_content['guide_mn'])
+        self.guide_mn.load_state_dict(name_content['guide_mn'])
         self.guide_ln.load_state_dict(name_content['guide_ln'])
         # title and suffix
         self.guide_title.load_state_dict(aux_content['guide_title'])

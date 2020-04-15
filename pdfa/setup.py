@@ -8,9 +8,9 @@ from .transition import Transition
 
 SPACE_DIST = [0.9, 0.1/3, 0.1/3, 0.1/3]
 TITLE_DIST = [0., 0.8, 0.15, 0., 0.05]
-FIRST_DIST = [0.01, 0.03, 0.15, 0.2, 0.2, 0.15, 0.1, 0.08, 0.04, 0.04]
-MIDDLE_DIST = [0.2, 0.04, 0.1, 0.1, 0.15, 0.15, 0.1, 0.08, 0.04, 0.04]
-LAST_DIST = [0.01, 0.03, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12]
+FIRST_DIST = [0.04, 0.04, 0.15, 0.2, 0.2, 0.15, 0.1, 0.04, 0.04, 0.04]
+MIDDLE_DIST = [0.25, 0.04, 0.1, 0.1, 0.125, 0.125, 0.1, 0.08, 0.04, 0.04]
+LAST_DIST = [0.04, 0.04, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.08]
 SUFFIX_DIST = [0.02, 0.49, 0.49]
 
 SPACE_NAMES_TO_STATES = {
@@ -165,7 +165,7 @@ l1_state.set_missing_emission_probs({PERIOD: l1_period_prob})
 
 NAMES_TO_STATES = {
     'START': State(name='START', symbols_to_probs={SOS_FORMAT: 1.}),
-    'START_SOS': State(name='START_SOS', symbols_to_probs={FIRST: 0.4, LAST: 0.4, TITLE: 0.15, SPACE: 0.05}),
+    'START_SOS': State(name='START_SOS', symbols_to_probs={FIRST: 0.45, LAST: 0.45, TITLE: 0.05, SPACE: 0.05}),
     'START_SPACE': PDFA(
         name='START_SPACE',
         start_state_name='SPACE1',
@@ -262,7 +262,7 @@ NAMES_TO_STATES = {
         name='MIDDLE_LFM_1_SPACE',
         start_state_name='SPACE1',
         delta=Transition(names_to_states=deepcopy(SPACE_NAMES_TO_STATES), transition_rules=SPACE_TRANSITION),
-        outbound_symbols_to_probs={SUFFIX: 0.6, MIDDLE: 0.3, EOS_FORMAT: 0.1}
+        outbound_symbols_to_probs={MIDDLE: 0.7, SUFFIX: 0.2, EOS_FORMAT: 0.1}
     ),
     'MIDDLE_LFM_2': PDFA(
         name='MIDDLE_LFM_2',
