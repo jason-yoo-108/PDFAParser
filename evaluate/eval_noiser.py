@@ -71,7 +71,7 @@ CHARACTER_REPLACEMENT['.'] = ',\';`'
 CHARACTER_REPLACEMENT['\''] = '"`'
 
 
-def noise_name(x: str, allowed_chars: str, max_noise: int = 2):
+def noise_name(x: str, allowed_chars: str, max_noise: int = 1):
     noise_type = distributions.Categorical(torch.tensor([1 / 4] * 4)).sample().item()
     x_length = len(x)
     ret = x
