@@ -31,6 +31,8 @@ class NameParser():
         self.guide_title = ClassificationDenoisingModel(PRINTABLE, dae_hidden_size, NOISE, TITLE_LIST, rnn_num_layers)
         self.guide_fn = SequenceDenoisingModel(PRINTABLE, dae_hidden_size, NOISE, self.output_chars,
                                                encoder_num_layers=rnn_num_layers)
+        self.guide_mn = SequenceDenoisingModel(PRINTABLE, dae_hidden_size, NOISE, self.output_chars,
+                                               encoder_num_layers=rnn_num_layers)
         self.guide_ln = SequenceDenoisingModel(PRINTABLE, dae_hidden_size, NOISE, self.output_chars,
                                                encoder_num_layers=rnn_num_layers)
         self.guide_suffix = ClassificationDenoisingModel(PRINTABLE, dae_hidden_size, NOISE, SUFFIX_LIST,
@@ -104,14 +106,14 @@ class NameParser():
             firstname, firstname_noise = sample_name_and_noise(name_parse[FIRST], self.noise_probs, self.guide_fn, ADDRESS['firstname'],
                                                                encoder_output, encoder_hidden)
         if len(name_parse[MIDDLE]) > 0:
-            pyro.module("first", self.guide_fn)
+            pyro.module("middle", self.guide_mn)
             encoder_outputs = []
             encoder_hiddens = []
             for middle_parse in name_parse[MIDDLE]:
-                encoder_output, encoder_hidden = self.guide_fn.encode(middle_parse)
+                encoder_output, encoder_hidden = self.guide_mn.encode(middle_parse)
                 encoder_outputs.append(encoder_output)
                 encoder_hiddens.append(encoder_hidden)
-            middlenames, middlenames_noise = sample_multiple_name_and_noise(name_parse[MIDDLE], self.noise_probs, self.guide_fn,
+            middlenames, middlenames_noise = sample_multiple_name_and_noise(name_parse[MIDDLE], self.noise_probs, self.guide_mn,
                                                                             ADDRESS['middlename'], encoder_outputs,
                                                                             encoder_hiddens)
         if len(name_parse[LAST]) > 0:
@@ -162,6 +164,7 @@ class NameParser():
         name_content = torch.load(name_fp, map_location=DEVICE)
         # name content
         self.guide_fn.load_state_dict(name_content['guide_fn'])
+        self.guide_ln.load_state_dict(name_content['guide_mn'])
         self.guide_ln.load_state_dict(name_content['guide_ln'])
         # title and suffix
         self.guide_title.load_state_dict(aux_content['guide_title'])
@@ -180,6 +183,7 @@ class NameParser():
         }
         name_content = {
             'guide_fn': self.guide_fn.state_dict(),
+            'guide_mn': self.guide_mn.state_dict(),
             'guide_ln': self.guide_ln.state_dict()
         }
         torch.save(aux_content, aux_fp)
