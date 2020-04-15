@@ -69,17 +69,19 @@ def sample_name_noise(name_format_length: int, name_noise_probs: float, pyro_add
         else:
             char_noise_class_probs = torch.Tensor(name_noise_probs).to(DEVICE)
 
-        if i == name_format_length - 1:
-            if name_length == 0:
-                char_noise_class_probs = forbid_noise_class(char_noise_class_probs,
-                                                            [NOISE_NONE, NOISE_REPLACE, NOISE_DELETE])
-        if name_length == 9:
+        if name_format_length == 1:
+            # Initials - No noising
+            char_noise_class_probs = forbid_noise_class(char_noise_class_probs, [NOISE_ADD, NOISE_REPLACE, NOISE_DELETE])
+        elif i == name_format_length - 1 and name_length == 0:
+            char_noise_class_probs = forbid_noise_class(char_noise_class_probs, [NOISE_NONE, NOISE_REPLACE, NOISE_DELETE])
+        elif name_length == 9:
             char_noise_class_probs = forbid_noise_class(char_noise_class_probs, [NOISE_ADD])
-        if name_length >= 10:
+        elif name_length >= 10:
             char_noise_class_probs = forbid_noise_class(char_noise_class_probs, [NOISE_NONE, NOISE_ADD, NOISE_REPLACE])
-        noise_class = NOISE[
-            pyro.sample(f"{pyro_address}_{ADDRESS['noise']}_{i}", dist.Categorical(char_noise_class_probs))]
+
+        noise_class = NOISE[pyro.sample(f"{pyro_address}_{ADDRESS['noise']}_{i}", dist.Categorical(char_noise_class_probs))]
         noise_classes.append(noise_class)
+
         if noise_class == NOISE_NONE or noise_class == NOISE_REPLACE: name_length += 1
         if noise_class == NOISE_ADD: name_length += 2
     return name_length, noise_classes
