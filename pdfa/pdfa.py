@@ -17,11 +17,27 @@ class PDFA():
         self.delta = delta
         self.device = device
         self.fill_incomplete_emission_probs(outbound_symbols_to_probs)
+        self.outbound_symbols_to_probs = outbound_symbols_to_probs
+        self.start_state_name = start_state_name
 
     def at_absorbing_state(self) -> bool:
         if isinstance(self.curr_state, PDFA):
             return self.curr_state.at_absorbing_state()
         return self.curr_state.absorbing
+
+    def copy(self, copy_state_pointer: bool = False):
+        """
+        Copy this PDFA object excluding for its current state pointer
+        """
+        names_to_states_copy = {}
+        for name, state in self.delta.names_to_states.items():
+            if isinstance(state, PDFA):
+                names_to_states_copy[name] = state.copy(copy_state_pointer)
+            else:
+                names_to_states_copy[name] = state
+        delta_copy = Transition(names_to_states_copy, self.delta.transition_rules)
+        state_pointer = self.curr_state.name if copy_state_pointer else self.start_state_name
+        return PDFA(self.name, state_pointer, delta_copy, self.device, self.outbound_symbols_to_probs)
 
     def fill_incomplete_emission_probs(self, outbound_symbols_to_probs: dict):
         """

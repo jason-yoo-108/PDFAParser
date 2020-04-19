@@ -38,9 +38,6 @@ def sample_conditional_pdfa(pdfa: PDFA, inference_network: CharacterClassificati
             emission_probs, hidden_state = inference_network.predict(symbol, encoder_output[i], hidden_state)
             emission_probs = emission_probs * torch.Tensor(pdfa.get_valid_emission_mask()).to(DEVICE)
             corrected_emission_probs = emission_probs / torch.sum(emission_probs)
-            if i == 0:
-                # Always sample SOS at the beginning
-                corrected_emission_probs = torch.Tensor(pdfa.get_emission_probs()).to(DEVICE)
             symbol = SYMBOL[pyro.sample(f"{ADDRESS['format']}_{i}", dist.Categorical(corrected_emission_probs))]
             transition_success = pdfa.transition(symbol)
             if not transition_success: raise Exception(

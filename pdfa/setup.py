@@ -367,4 +367,4 @@ CANONICAL_PDFA = PDFA(
 
 
 def generate_name_pdfa() -> PDFA:
-    return deepcopy(CANONICAL_PDFA)
+    return CANONICAL_PDFA.copy()

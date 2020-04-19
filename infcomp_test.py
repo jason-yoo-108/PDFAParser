@@ -3,6 +3,7 @@ import argparse
 import distance
 import pandas as pd
 
+from evaluate.beam import beam_search
 from evaluate.eval_noiser import *
 from evaluate.score import *
 from infcomp import NameParser
@@ -18,6 +19,7 @@ parser.add_argument('--parse', help='only parse instead of denoising and parsing
 parser.add_argument('--noised', help='whether to noise the observed name', nargs='?', default=False, type=bool)
 parser.add_argument('--test_set', help='path of the test set', nargs='?', default='data/test.csv')
 parser.add_argument('--session_name', help='name of the save file in results folder', nargs='?', default='incorrect_names')
+parser.add_argument('--beam_width', help='beam width to be used during beam search', nargs='?', default=0, type=int)
 
 args = parser.parse_args()
 
@@ -48,6 +50,11 @@ def parse_to_append(result):
 
 
 def infer(observed_name):
+    if args.beam_width > 0:
+        # return beam search parse result
+        parse = beam_search(name_parser, name_parser.index_encode(observed_name), args.beam_width)[0]
+        return parse['firstname'], parse['middlename'], parse['lastname']
+    
     if args.true_posterior:
         traces = get_importance_traces(observed_name, name_parser, args.num_samples, args.num_particles)
     else:
