@@ -34,7 +34,7 @@ fn_distances = []
 mn_distances = []
 ln_distances = []
 
-test_data = pd.read_csv(args.test_set, keep_default_na=False)[:100]
+test_data = pd.read_csv(args.test_set, keep_default_na=False)[:500]
 
 
 def parse_to_append(result):
@@ -110,6 +110,6 @@ ln_accuracy_rate = ln_correct_count / len(ln_distances)
 print("First name accuracy: %.3f" % fn_accuracy_rate)
 print("Middle name accuracy: %.3f" % mn_accuracy_rate)
 print("Last name accuracy: %.3f" % ln_accuracy_rate)
-
+print("Total name accuracy: %.3f" % (1-len(incorrect_name)/len(test_data)))
 incorrect_df = pd.DataFrame({'original name': incorrect_name, 'predicted first': incorrect_fn, 'predicted middle': incorrect_mn, 'predicted last': incorrect_ln})
 incorrect_df.to_csv(f"result/{args.session_name}.csv", index=None)
