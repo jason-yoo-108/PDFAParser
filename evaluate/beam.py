@@ -137,34 +137,41 @@ def beam_search(name_parser, full_name, beam_width):
         beam_search_pdfa(bm)
         bm.name_parse()
         parsed_names_lst = bm.result()
-
+        rank_1 = parsed_names_lst[0]
         for entry in parsed_names_lst:
             firsts = entry['firstname'].split()
             middles = entry['middlename'].split()
             lasts = entry['lastname'].split()
-            
+
+            top_k_firsts = dae_beam_search(name_parser.guide_fn, firsts, beam_width)
+            top_k_middles = dae_beam_search(name_parser.guide_mn, middles, beam_width)
+            top_k_lasts = dae_beam_search(name_parser.guide_ln, lasts, beam_width)
+            print('test')
 
     return bm.result()
 
 
-def dae_beam_search(dae: SequenceDenoisingModel, names: list):
+def dae_beam_search(dae: SequenceDenoisingModel, names: list, beam_width: int):
+    cleaned_names = []
     for name in names:
         length_tensor = torch.LongTensor([len(name)]).to(DEVICE)
         input_tensor = torch.LongTensor(
             [dae.input.index(c) for c in name]).to(DEVICE)
         _, hidden = dae.encode(input_tensor)
-        top_k = top_k_beam_search(dae, length_tensor, hidden)
+        top_k = top_k_beam_search(dae, length_tensor, hidden, k=beam_width)
+        cleaned_names.append(top_k)
+    return cleaned_names
 
 
-def top_k_beam_search(dae: SequenceDenoisingModel, length_tensor: torch.Tensor, hidden: torch.Tensor, k: int = 6, penalty: float = 4.0):
-    input = torch.LongTensor([dae.input.index(SOS)]).to(DEVICE)
+def top_k_beam_search(dae: SequenceDenoisingModel, length_tensor: torch.Tensor, hidden: torch.Tensor, k: int, top_penalty: float = 0.0):
+    input = SOS
+    output_sz = dae.decoder_output_sz
+    output_chars = dae.decoder_output
     output, hidden = dae.decode(input, length_tensor, hidden)
-    probs = output.reshape(dae.output_sz)
+    probs = output.reshape(output_sz)
+    EOS_idx = output_chars.index(EOS)
     probs[EOS_idx] = 0
     top_k_probs, top_k_idx = torch.topk(probs, k, dim=0)
-    
-    output_chars = dae.output
-    EOS_idx = output_chars.index(EOS)
 
     top_k = []
     prev_chars = []
@@ -173,7 +180,7 @@ def top_k_beam_search(dae: SequenceDenoisingModel, length_tensor: torch.Tensor, 
 
         if i == 0:
             top_k.append(
-                ([prev_char], -math.log(top_k_probs[i].item()) + penalty, hidden))
+                ([prev_char], -math.log(top_k_probs[i].item()) + top_penalty, hidden))
         else:
             top_k.append(
                 ([prev_char], -math.log(top_k_probs[i].item()), hidden))
@@ -186,9 +193,9 @@ def top_k_beam_search(dae: SequenceDenoisingModel, length_tensor: torch.Tensor, 
 
         for name, score, hidden in top_k:
             prev_char = name[-1]
-            input = torch.LongTensor([dae.input.index(prev_char)]).to(DEVICE)
+            input = prev_char
             output, hidden = dae.decode(input, length_tensor, hidden)
-            probs = output.reshape(dae.output_sz)
+            probs = output.reshape(output_sz)
             top_k_probs, top_k_idx = torch.topk(probs, k, dim=0)
             top_k_probs = top_k_probs.reshape(k)
             top_k_idx = top_k_idx.reshape(k)
@@ -203,7 +210,7 @@ def top_k_beam_search(dae: SequenceDenoisingModel, length_tensor: torch.Tensor, 
 
         hypotheses.sort(key=lambda x: x[1])
         top_k = hypotheses[:k]
-        top_k[0] = top_k[0][0], top_k[0][1] + penalty, top_k[0][2]
+        top_k[0] = top_k[0][0], top_k[0][1] + top_penalty, top_k[0][2]
         prev_chars = [name[-1] for name, probs, hidden in top_k]
 
     return top_k
