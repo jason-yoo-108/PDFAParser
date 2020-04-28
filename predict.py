@@ -14,7 +14,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_particles', help='# of particles to use for SIS', nargs='?', default=15, type=int)
     parser.add_argument('--num_samples', help='# samples', nargs='?', default=10, type=int)
     parser.add_argument('--parse', help='only parse instead of denoising and parsing', nargs='?', default=False, type=bool)
-    parser.add_argument('--beam_width', help='beam width to be used during beam search', nargs='?', default=2, type=int)
+    parser.add_argument('--beam_width', help='beam width to be used during beam search', nargs='?', default=6, type=int)
     args = parser.parse_args()
 
     config = load_json(args.config)
