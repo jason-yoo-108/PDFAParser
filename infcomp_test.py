@@ -10,7 +10,7 @@ from infcomp import NameParser
 from utilities.config import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--config', help='filepath to config json', type=str, default='config/UNNAMED_SESSION.json')
+parser.add_argument('--config', help='filepath to config json', type=str, default='config/v4.1.json')
 parser.add_argument('--true_posterior', help='whether to sample from p(z|x) or q(z|x)', nargs='?', default=False,
                     type=bool)
 parser.add_argument('--num_particles', help='# of particles to use for SIS', nargs='?', default=10, type=int)
@@ -18,7 +18,7 @@ parser.add_argument('--num_samples', help='# samples', nargs='?', default=10, ty
 parser.add_argument('--parse', help='only parse instead of denoising and parsing', nargs='?', default=False, type=bool)
 parser.add_argument('--noised', help='whether to noise the observed name', nargs='?', default=False, type=bool)
 parser.add_argument('--test_set', help='path of the test set', nargs='?', default='data/test.csv')
-parser.add_argument('--session_name', help='name of the save file in results folder', nargs='?', default='incorrect_names')
+parser.add_argument('--session_name', help='name of the save file in results folder', nargs='?', default='session')
 parser.add_argument('--beam_width', help='beam width to be used during beam search', nargs='?', default=0, type=int)
 
 args = parser.parse_args()
@@ -36,7 +36,7 @@ fn_distances = []
 mn_distances = []
 ln_distances = []
 
-test_data = pd.read_csv(args.test_set, keep_default_na=False)[:500]
+test_data = pd.read_csv(args.test_set, keep_default_na=False)
 
 
 def parse_to_append(result):
@@ -68,10 +68,19 @@ def infer(observed_name):
     firstname, middlename, lastname = parse['firstname'], parse['middlename'], parse['lastname']
     return firstname, middlename, lastname
 
-incorrect_name = []
-incorrect_fn = []
-incorrect_mn = []
-incorrect_ln = []
+incorrect_names = []
+incorrect_noised_names = []
+incorrect_fns = []
+incorrect_mns = []
+incorrect_lns = []
+
+correct_names = []
+noised_names = []
+correct_fns = []
+correct_mns = []
+correct_lns = []
+
+counter = 0
 
 for i, j in test_data.iterrows():
 
@@ -79,6 +88,8 @@ for i, j in test_data.iterrows():
     if args.noised:
         allowed_noise = [c for c in string.ascii_letters + string.digits]
         curr = noise_name(curr, allowed_noise)
+        if curr == j['name']: continue
+    
     correct_fn = j['first']
     correct_mn = j['middle']
     correct_ln = j['last']
@@ -93,16 +104,27 @@ for i, j in test_data.iterrows():
     ln_distances.append(ln_distance)
 
     if fn_distance > 0 or mn_distance > 0 or ln_distance > 0:
-        incorrect_name.append(curr)
-        incorrect_fn.append(firstname)
-        incorrect_mn.append(middlename)
-        incorrect_ln.append(lastname)
+        incorrect_names.append(j['name'])
+        incorrect_noised_names.append(curr)
+        incorrect_fns.append(firstname)
+        incorrect_mns.append(middlename)
+        incorrect_lns.append(lastname)
+    else:
+        correct_names.append(j['name'])
+        noised_names.append(curr)
+        correct_fns.append(firstname)
+        correct_mns.append(middlename)
+        correct_lns.append(lastname)
+    
     if fn_distance == 0:
         fn_correct_count += 1
     if mn_distance == 0:
         mn_correct_count += 1
     if ln_distance == 0:
         ln_correct_count += 1
+    
+    counter += 1
+    if counter % 1 == 0: print(f"Counter: {counter}")
 
 fn_average_distance = sum(fn_distances) / len(fn_distances)
 mn_average_distance = sum(mn_distances) / len(mn_distances)
@@ -117,6 +139,18 @@ ln_accuracy_rate = ln_correct_count / len(ln_distances)
 print("First name accuracy: %.3f" % fn_accuracy_rate)
 print("Middle name accuracy: %.3f" % mn_accuracy_rate)
 print("Last name accuracy: %.3f" % ln_accuracy_rate)
-print("Total name accuracy: %.3f" % (1-len(incorrect_name)/len(test_data)))
-incorrect_df = pd.DataFrame({'original name': incorrect_name, 'predicted first': incorrect_fn, 'predicted middle': incorrect_mn, 'predicted last': incorrect_ln})
-incorrect_df.to_csv(f"result/{args.session_name}.csv", index=None)
+print("Total name accuracy: %.3f" % (1-len(incorrect_names)/len(test_data)))
+
+
+if args.noised:
+    incorrect_df = pd.DataFrame({'original name': incorrect_names, 'noised name': incorrect_noised_names, 'predicted first': incorrect_fns, 'predicted middle': incorrect_mns, 'predicted last': incorrect_lns})
+    incorrect_df.to_csv(f"result/{args.session_name}_incorrect.csv", index=None)
+
+    correct_df = pd.DataFrame({'original name': correct_names, 'noised name': noised_names, 'predicted first': correct_fns, 'predicted middle': correct_mns, 'predicted last': correct_lns})
+    correct_df.to_csv(f"result/{args.session_name}_correct.csv", index=None)
+else:
+    incorrect_df = pd.DataFrame({'original name': incorrect_names, 'predicted first': incorrect_fns, 'predicted middle': incorrect_mns, 'predicted last': incorrect_lns})
+    incorrect_df.to_csv(f"result/{args.session_name}_incorrect.csv", index=None)
+
+    correct_df = pd.DataFrame({'original name': correct_names, 'predicted first': correct_fns, 'predicted middle': correct_mns, 'predicted last': correct_lns})
+    correct_df.to_csv(f"result/{args.session_name}_correct.csv", index=None)

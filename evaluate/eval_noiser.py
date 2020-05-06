@@ -72,10 +72,9 @@ CHARACTER_REPLACEMENT['\''] = '"`'
 
 
 def noise_name(x: str, allowed_chars: str, max_noise: int = 1):
-    noise_type = distributions.Categorical(torch.tensor([1 / 4] * 4)).sample().item()
+    noise_type = distributions.Categorical(torch.tensor([1/3, 1/6, 1/3, 1/6])).sample().item()
     x_length = len(x)
     ret = x
-
     if noise_type == 0:
         ret = add_chars(x, allowed_chars, max_add=max_noise)
     elif noise_type == 1:
@@ -84,89 +83,79 @@ def noise_name(x: str, allowed_chars: str, max_noise: int = 1):
         ret = remove_chars(x, max_remove=max_noise)
     elif noise_type == 3:
         ret = switch_to_similar(x, allowed_chars, max_switch=max_noise)
-
     return ret
-
-
-def noise_seperator(allowed_chars: str, x: str = " ", max_noise: int = 3):
-    noise_type = distributions.Categorical(torch.tensor([1 / 5] * 4)).sample().item()
-
-    if noise_type == 0:
-        return add_chars(x, allowed_chars, max_add=max_noise)
-    elif noise_type == 1:
-        return switch_chars(x, allowed_chars, max_switch=max_noise)
-    elif noise_type == 2:
-        return '' * (distributions.Categorical(torch.tensor([1 / max_noise] * max_noise)).sample().item() + 1)
-    else:
-        return x
 
 
 def add_chars(x: str, allowed_chars: str, max_add: int):
     ret = x
-    num_add = distributions.Categorical(torch.tensor([1 / max_add] * max_add)).sample().item()
-
-    for i in range(num_add):
+    for i in range(max_add):
         random_char = allowed_chars[randint(0, len(allowed_chars) - 1)]
         pos = randint(0, len(ret) - 1)
         ret = "".join((ret[:pos], random_char, ret[pos:]))
-
     return ret
 
 
 def switch_chars(x: str, allowed_chars: str, max_switch: int):
+    if len(x) < max_switch:
+        max_switch = len(x)
+
     ret = x
-    allowed_length = len(allowed_chars)
-    x_len = len(x)
-
-    if x_len < max_switch:
-        max_switch = x_len
-
-    num_switch = distributions.Categorical(torch.tensor([1 / max_switch] * max_switch)).sample().item()
-
-    for i in range(num_switch):
-        pos = distributions.Categorical(torch.tensor([1 / x_len] * x_len)).sample().item()
+    for i in range(max_switch):
+        pos = distributions.Categorical(torch.tensor([1 / len(x)] * len(x))).sample().item()
         random_char = allowed_chars[
-            distributions.Categorical(torch.tensor([1 / allowed_length] * allowed_length)).sample().item()]
+            distributions.Categorical(torch.tensor([1 / len(allowed_chars)] * len(allowed_chars))).sample().item()]
         ret = "".join((ret[:pos], random_char, ret[pos + 1:]))
-
     return ret
 
 
 def switch_to_similar(x: str, allowed_chars: str, max_switch: int):
+    if len(x) < max_switch:
+        max_switch = len(x)
+
     ret = x
-    x_length = len(x)
-
-    if max_switch > x_length:
-        max_switch = x_length
-
-    num_switch = distributions.Categorical(torch.tensor([1 / max_switch] * max_switch)).sample().item()
-
-    for i in range(num_switch):
-        pos = distributions.Categorical(torch.tensor([1 / x_length] * x_length)).sample().item()
+    for i in range(max_switch):
+        pos = distributions.Categorical(torch.tensor([1 / len(x)] * len(x))).sample().item()
         current_char = x[pos]
-        replacements = CHARACTER_REPLACEMENT[x[pos]] if x[pos] in CHARACTER_REPLACEMENT else x[pos]
-        replacements_length = len(replacements)
+        replacements = CHARACTER_REPLACEMENT[x[pos]] if x[pos] in CHARACTER_REPLACEMENT else allowed_chars
         random_char = replacements[
-            distributions.Categorical(torch.tensor([1 / replacements_length] * replacements_length)).sample().item()]
+            distributions.Categorical(torch.tensor([1 / len(replacements)] * len(replacements))).sample().item()]
         ret = "".join((ret[:pos], random_char, ret[pos + 1:]))
-
     return ret
 
 
 def remove_chars(x: str, max_remove: int):
+    if len(x) <= max_remove:
+        max_remove = len(x) - 1
+
     ret = x
-    x_length = len(x)
-
-    if x_length == 1:
-        return x
-    elif x_length > max_remove:
-        max_remove = x_length - 2
-
-    num_remove = distributions.Categorical(torch.tensor([1 / max_remove] * max_remove)).sample().item()
-
-    for i in range(num_remove):
+    for i in range(max_remove):
         x_length = len(ret)
         pos = distributions.Categorical(torch.tensor([1 / x_length] * x_length)).sample().item()
         ret = "".join((ret[:pos], ret[pos + 1:]))
-
     return ret
+
+
+def noise_separator(name_split: list):
+    recognized_separators = [',',' ','.']
+    noise_probs = torch.zeros(len(name_split))
+    for i, name in enumerate(name_split):
+        if name_split[i] in recognized_separators:
+            noise_probs[i] = 1.
+    noise_index = torch.distributions.Categorical(noise_probs/noise_probs.sum()).sample().item()
+    separator = name_split[noise_index]
+
+    # Type of noise to apply
+    noise_type = torch.distributions.Categorical(torch.Tensor([1/3]*3)).sample().item()
+    if noise_type == 0: # Add a character after
+        random_addition = separator
+        name_split[noise_index] = separator + random_addition
+    elif noise_type == 1: # Add a random character
+        replace_probs = torch.zeros(len(recognized_separators))
+        for i, char in enumerate(recognized_separators):
+            if separator == char: continue
+            replace_probs[i] = 1.
+        random_replacement = recognized_separators[torch.distributions.Categorical(replace_probs/replace_probs.sum()).sample().item()]
+        name_split[noise_index] = random_replacement
+    else:
+        name_split[noise_index] = ''
+    return name_split

@@ -23,9 +23,10 @@ if __name__ == "__main__":
     name_parser.test_mode()
 
     if args.beam_width > 0:
+        print("Beam Search Result")
         beam_results = beam_search(name_parser=name_parser, full_name=name_parser.index_encode(args.name), beam_width=args.beam_width)
-        for r in beam_results:
-            desc = "Parsed Result (log prob: %.5f)" % r['log_prob']
+        for i, r in enumerate(beam_results):
+            desc = "Parse " + str(1+i) + " (log prob: %.5f)" % r['log_prob']
             del r['log_prob']
             print(f"{desc}: {r}")
         import sys; sys.exit(0)

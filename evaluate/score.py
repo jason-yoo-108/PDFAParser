@@ -121,3 +121,28 @@ def get_guide_traces(name, name_parser, num_samples) -> list:
         trace = pyro.poutine.trace(name_parser.guide).get_trace(observations={'output': name_parser.index_encode(name)})
         sample_traces.append(trace)
     return sample_traces
+
+
+def error_detection_summary(true_components, noised_components, pred_components) -> dict:
+    num_true_positive = 0
+    num_false_positive = 0
+    num_false_negative = 0
+
+    for true, noised, pred in zip(true_components, noised_components, pred_components):
+        is_noised = true != noised
+        if true != noised and pred != noised:
+            num_true_positive += 1
+        elif true == noised and pred != noised:
+            num_false_positive += 1
+        elif true != noised and pred == noised:
+            num_false_negative += 1
+
+    precision = num_true_positive/(num_true_positive+num_false_positive)
+    recall = num_true_positive/(num_true_positive+num_false_negative)
+    f1 = 2 * precision * recall / (precision + recall)
+
+    return {
+        'precision': precision,
+        'recall': recall,
+        'f1': f1,
+    }
